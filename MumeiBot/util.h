@@ -29,6 +29,8 @@ extern size_t output_cap;
 #define THROW_CURL(cmd, finally) { CURLcode err = cmd; if (err) { finally; return err; } }
 #define WARN_CURL(cmd) { CURLcode err = cmd; if (err) { fprintf(stderr, "WARNING: %s returned %d \"%s\"", #cmd, err, curl_easy_strerror(err)); } }
 
+char * get_token();
+
 size_t write_data(void * buffer, size_t size, size_t nmemb, void * _);
 
 size_t read_data(void * buffer, size_t size, size_t nmemb, void * _);

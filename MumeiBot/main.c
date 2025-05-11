@@ -54,6 +54,8 @@ int main(void) {
 
 	}
 
+	const char * token = get_token();
+
 	while (1) {
 
 		const char * entry = poll_RSS("https://www.youtube.com/feeds/videos.xml?channel_id=UC3n5uGu18FoCy23ggWWp8tA");
@@ -68,7 +70,6 @@ int main(void) {
 				const char * link_end = strstr(link_start, "\"");
 
 				const char * endpoint = "channels/599365997920649216/messages";
-				const char * token = "MTMzNjQ5NTQwNDMwODc2MjY4NQ.GVYzYl.6-pU7A-06WOp6PuZO-mZBjas4oBiFLwcWT74Vo";
 
 				output = malloc(256);
 				output_cap = 256;

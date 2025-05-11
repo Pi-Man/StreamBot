@@ -38,6 +38,26 @@ static bool areDigits(const char * str) {
 	return flag;
 }
 
+char * get_token() {
+
+	FILE * ftok = fopen("token.txt", "r");
+
+	if (!ftok) return NULL;
+
+	int n = 0;
+	while (n < 1024 && !feof(ftok)) fgetc(ftok), n++;
+
+	rewind(ftok);
+
+	char * tok = malloc(n + 1);
+
+	n = 0;
+	while (!feof(ftok)) tok[n] = fgetc(ftok);
+	tok[n] = 0;
+
+	return tok;
+}
+
 size_t write_data(void * buffer, size_t size, size_t nmemb, void * _) {
 	size_t bytes = size * nmemb;
 	while (input_size + bytes > input_cap) {
