@@ -1,0 +1,39 @@
+body {
+    background-color: powderblue;
+    margin: 0;
+    padding: 0;
+}
+
+.centered {
+    text-align: center;
+    align-content: center;
+}
+
+.flex {
+    height: 80vh;
+    display: flex;
+    flex-flow: column wrap;
+    align-content: flex-start;
+}
+
+.square {
+    display: inline-grid;
+    height: 40vh;
+    width: 40vh;
+}
+
+[data-color="red"] {
+    background-color: red;
+}
+
+[data-color="blue"] {
+    background-color: blue;
+}
+
+[data-color="green"] {
+    background-color: green;
+}
+
+[data-color="black"] {
+    background-color: black;
+}

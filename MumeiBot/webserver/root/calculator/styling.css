@@ -1,0 +1,47 @@
+#base {
+    display: flex;
+    flex-flow: column;
+    justify-content: space-evenly;
+    width: 180px;
+}
+
+#screen {
+    height: 90px;
+    background-color: #C0C0C0;
+    text-align: right;
+    box-shadow: 2px 2px 2px inset;
+    overflow: auto;
+}
+
+#entry {
+    height: 20px;
+    background-color: #C0C0C0;
+    text-align: right;
+    box-shadow: 2px 2px 2px inset;
+    overflow: hidden;
+    margin: 5px;
+}
+
+#buttons {
+    display: flex;
+    flex-flow: row wrap;
+    justify-content: space-evenly;
+    text-align: center;
+    align-items: center;
+}
+
+.button {
+    width: 21%;
+    background-color: #808080;
+    border-radius: 5px;
+    box-shadow: 2px 2px 2px;
+    margin-top: 5%;
+    user-select: none;
+    z-index: 1;
+}
+
+.button:active {
+    box-shadow: 1px 1px 2px;
+    transform: translate(1px, 1px);
+    z-index: 0;
+}

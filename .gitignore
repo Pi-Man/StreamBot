@@ -50,3 +50,13 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+# Project ignore
+.vs/
+*x64/
+MumeiBot.sln
+MumeiBot/MumeiBot/
+*.log
+*.txt
+*.exe
+*.vcxproj*
