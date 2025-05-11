@@ -26,14 +26,13 @@ int main(void) {
 		#else
 		"document_root", "/home/ubuntu/webserver/root/",
 		#endif
-		//"enable_directory_listing", "no",
+		"enable_directory_listing", "no",
 		"static_file_max_age", "0",
 		"enable_auth_domain_check", "no",
 		"listening_ports", "localhost:65000",
 		"request_timeout_ms", "10000",
 		"access_log_file", "access.log",
 		"error_log_file", "error.log",
-		"ssl_certificate", "cert.key",
 		NULL };
 
 	struct mg_context * ctx = mg_start(&callbacks, NULL, options);
@@ -47,7 +46,7 @@ int main(void) {
 
 	while (1) {
 		#ifndef _DEBUG
-		subscribe_RSS("https://www.youtube.com/xml/feeds/videos.xml?channel_id=UC3n5uGu18FoCy23ggWWp8tA", &lease);
+		subscribe_RSS("https://www.youtube.com/xml/feeds/videos.xml?channel_id=UCcHHkJ98eSfa5aj0mdTwwLQ", &lease);
 		#endif
 
 		SLEEP(lease * 1000);
