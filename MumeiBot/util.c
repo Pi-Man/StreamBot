@@ -22,7 +22,7 @@ char output_type[256] = { 0 };
 
 CURL * curl = NULL;
 
-#define SUB_TIMEOUT 10000000
+#define SUB_TIMEOUT 10000
 #define SLEEP_TIME 100
 
 static volatile char * sub_topic;
