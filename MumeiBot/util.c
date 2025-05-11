@@ -4,6 +4,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #ifndef _WIN32
 #define min(a, b) (a) < (b) ? (a) : (b)
