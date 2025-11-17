@@ -262,6 +262,7 @@ void subscribe_RSS(const char * url, long long * lease) {
 	free(output);
 	free(sub_topic);
 	output = NULL;
+	output_cap = 0;
 	sub_topic = NULL;
 	if (lease) *lease = sub_lease;
 }
