@@ -28,7 +28,6 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 			"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
 			"close\r\n\r\n");
 		mg_printf(conn, "<!DOCTYPE html><html><body>");
-		mg_printf(conn, "<h1>Authorized</h1>");
 		input_size = 0;
 		input = malloc(16);
 		input_cap = 16;
@@ -39,9 +38,11 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 			output = realloc(output, input_size);
 		}
 		memcpy(output, input, input_size);
+		free(input);
 		output_size = input_size;
 		sprintf(output_type, "application/x-www-form-urlencoded");
 		POST(TOKEN_URL, NULL, CLIENT_ID, CLIENT_SECRET);
+		mg_printf(conn, "<h1>Authorized</h1>");
 		mg_printf(conn, "<pre><code>%s</code></pre>", input);
 		mg_printf(conn, "</body></html>\n");
 	}
