@@ -115,7 +115,7 @@ CURLcode GET(const char * url) {
 
 }
 
-CURLcode POST(const char * url, struct curl_slist * header) {
+CURLcode POST(const char * url, struct curl_slist * header, const char * username, const char * password) {
 
 	if (input) {
 		input_size = 0;
@@ -136,7 +136,8 @@ CURLcode POST(const char * url, struct curl_slist * header) {
 	free(h);
 
 	#define CLEANUP { if (flag) curl_slist_free_all(header); }
-
+	if (username) THROW_CURL(curl_easy_setopt(curl, CURLOPT_USERNAME, username), CLEANUP);
+	if (username && password) THROW_CURL(curl_easy_setopt(curl, CURLOPT_PASSWORD, password), CLEANUP);
 	THROW_CURL(curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header), CLEANUP);
 	THROW_CURL(curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem"), CLEANUP);
 	THROW_CURL(curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_data), CLEANUP);
@@ -185,7 +186,7 @@ CURLcode Discord_POST(const char * endpoint, const char * token) {
 
 	#define CLEANUP { free(url); free(authorization); curl_slist_free_all(header); }
 
-	THROW_CURL(POST(url, header), CLEANUP);
+	THROW_CURL(POST(url, header, NULL, NULL), CLEANUP);
 
 	//THROW_CURL(curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header), CLEANUP);
 	//THROW_CURL(curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem"), CLEANUP);
@@ -242,7 +243,7 @@ void subscribe_RSS(const char * url, long long * lease) {
 
 	sub_topic = strdup(url);
 
-	POST("https://pubsubhubbub.appspot.com/subscribe", NULL);
+	POST("https://pubsubhubbub.appspot.com/subscribe", NULL, NULL, NULL);
 
 	sub_wait = true;
 

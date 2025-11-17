@@ -19,10 +19,13 @@
 
 extern char * input;
 extern size_t input_size;
+extern size_t input_cap;
 
 extern char * output;
 extern size_t output_size;
 extern size_t output_cap;
+extern char output_type[256];
+
 
 #define FATAL_CURL(cmd) { CURLcode err = cmd; if (err) { fprintf(stderr, "Fatal Error: %s returned %d \"%s\"", #cmd, err, curl_easy_strerror(err)); exit(err); } }
 #define ERROR_CURL(cmd, on_err) { CURLcode err = cmd; if (err) { fprintf(stderr, "Error: %s returned %d \"%s\"", #cmd, err, curl_easy_strerror(err)); on_err } }
@@ -39,7 +42,7 @@ CURLcode init_curl(void);
 
 CURLcode GET(const char * url);
 
-CURLcode POST(const char * url, struct curl_slist * header);
+CURLcode POST(const char * url, struct curl_slist * header, const char * username, const char * password);
 
 CURLcode Discord_POST(const char * endpoint, const char * token);
 
