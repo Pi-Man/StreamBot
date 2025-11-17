@@ -22,7 +22,7 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 
 	if (code) {
 		code += 5;
-		char * code_end = strchr(code, "&");
+		char * code_end = strchr(code, '&');
 		if (code_end) *code_end = 0;
 		mg_printf(conn,
 			"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
