@@ -9,7 +9,7 @@
 #define TOKEN_URL "https://discord.com/api/oauth2/token"
 #define REDIRECT_URL "https://3.141592.dev/register"
 #define CLIENT_ID "1336495404308762685"
-#define CLIENT_SECRET "HkYKcDJxhIWogXst1_1R2zwGFTDhcw7B" //TODO: make file before committing
+#define CLIENT_SECRET "" //TODO: make file before committing
 
 int register_callback(struct mg_connection * conn, void * cbdata) {
 
