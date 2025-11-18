@@ -2,10 +2,13 @@
 
 
 StreamBot: civetweb.o html.o util.o register.o main.o
-	gcc -g $^ -D_DEBUG -lcurl -o $@
+	g++ -g $^ $(args) -lcurl -o $@
 
 %.o: %.c
-	gcc -g -c $< -D_DEBUG -o $@
+	gcc -g -c $< $(args) -o $@
+
+%.o: %.cpp
+	g++ -g -c $< $(args) -o $@
 
 bin:
 	mkdir bin
