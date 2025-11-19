@@ -33,7 +33,7 @@ static volatile long long sub_lease;
 
 static bool areDigits(const char * str) {
 	bool flag = true;
-	for (char * c = str; *c && flag; c++) {
+	for (const char * c = str; *c && flag; c++) {
 		flag = flag && isdigit(*c);
 	}
 	return flag;
@@ -50,7 +50,7 @@ char * get_token() {
 
 	rewind(ftok);
 
-	char * tok = malloc(n + 1);
+	char * tok = (char*) malloc(n + 1);
 
 	n = 0;
 	while (!feof(ftok)) tok[n] = fgetc(ftok);
@@ -62,7 +62,7 @@ char * get_token() {
 size_t write_data(void * buffer, size_t size, size_t nmemb, void * _) {
 	size_t bytes = size * nmemb;
 	while (input_size + bytes > input_cap) {
-		input = realloc(input, input_cap *= 2);
+		input = (char*) realloc(input, input_cap *= 2);
 	}
 	memmove(input + input_size, buffer, bytes);
 	input_size += bytes;
@@ -83,7 +83,7 @@ CURLcode init_curl(void) {
 	curl = curl_easy_init();
 	if (!curl) {
 		curl_global_cleanup();
-		return -1;
+		return CURLE_FAILED_INIT;
 	}
 
 	return CURLE_OK;
@@ -98,7 +98,7 @@ CURLcode GET(const char * url) {
 	}
 	else {
 		input_cap = 16;
-		input = malloc(input_cap);
+		input = (char*) malloc(input_cap);
 	}
 
 	curl_easy_reset(curl);
@@ -109,7 +109,7 @@ CURLcode GET(const char * url) {
 
 	THROW_CURL(curl_easy_perform(curl), {});
 
-	write_data("", 1, 1, NULL);
+	write_data((void*)"", 1, 1, NULL);
 
 	return CURLE_OK;
 
@@ -123,14 +123,14 @@ CURLcode POST(const char * url, struct curl_slist * header, const char * usernam
 	}
 	else {
 		input_cap = 16;
-		input = malloc(input_cap);
+		input = (char*) malloc(input_cap);
 	}
 
 	curl_easy_reset(curl);
 
 	bool flag = !header;
 
-	char * h = malloc(14 + strlen(output_type) + 1);
+	char * h = (char*) malloc(14 + strlen(output_type) + 1);
 	sprintf(h, "Content-Type: %s", output_type);
 	header = curl_slist_append(header, h);
 	free(h);
@@ -150,7 +150,7 @@ CURLcode POST(const char * url, struct curl_slist * header, const char * usernam
 
 	THROW_CURL(curl_easy_perform(curl), CLEANUP);
 
-	write_data("", 1, 1, NULL);
+	write_data((void*)"", 1, 1, NULL);
 
 	CLEANUP;
 
@@ -173,8 +173,8 @@ CURLcode Discord_POST(const char * endpoint, const char * token) {
 
 	//curl_easy_reset(curl);
 
-	char * url = malloc(28 + strlen(endpoint) + 1); // strlne("https://discord.com/api/v10/");
-	char * authorization = malloc(19 + strlen(token) + 1); // strlen("Authorization: Bot ");
+	char * url = (char*) malloc(28 + strlen(endpoint) + 1); // strlne("https://discord.com/api/v10/");
+	char * authorization = (char*) malloc(19 + strlen(token) + 1); // strlen("Authorization: Bot ");
 
 	sprintf(url, "https://discord.com/api/v10/%s", endpoint);
 	sprintf(authorization, "Authorization: Bot %s", token);
@@ -232,7 +232,7 @@ char * poll_RSS(const char * url) {
 
 void subscribe_RSS(const char * url, long long * lease) {
 
-	output = malloc(512);
+	output = (char*) malloc(512);
 	output_cap = 512;
 
 	sprintf(output_type, "application/x-www-form-urlencoded");
@@ -260,7 +260,7 @@ void subscribe_RSS(const char * url, long long * lease) {
 	}
 
 	free(output);
-	free(sub_topic);
+	free((void*) sub_topic);
 	output = NULL;
 	output_cap = 0;
 	sub_topic = NULL;
@@ -319,7 +319,7 @@ int confirm_subscription(struct mg_connection * conn, const struct mg_request_in
 	if (flag) {
 		flag = flag
 			&& (strcmp(hub.mode, "subscribe") == 0)
-			&& (strcmp(hub.topic, sub_topic) == 0)
+			&& (strcmp(hub.topic, (const char*)sub_topic) == 0)
 			&& areDigits(hub.lease);
 	}
 
@@ -362,21 +362,21 @@ bool is_new_entry(const char * entry_xml) {
 		fclose(f);
 	}
 
-	char * date_xml = strstr(entry_xml, "<published>");
+	const char * date_xml = strstr(entry_xml, "<published>");
 	if (!date_xml) return false;
 	date_xml += 11; // strlen("<published>");
-	char * date_xml_end = strstr(entry_xml, "</published>");
+	const char * date_xml_end = strstr(entry_xml, "</published>");
 	if (!date_xml_end) return false;
 
 	memcpy(new_date, date_xml, min(date_xml_end - date_xml, 63));
 
-	bool new = strcmp(old_date, new_date) != 0;
+	bool is_new = strcmp(old_date, new_date) != 0;
 
-	if (new) {
+	if (is_new) {
 		f = fopen("last_date.txt", "w");
 		fwrite(new_date, 1, strlen(new_date), f);
 		fclose(f);
 	}
 
-	return new;
+	return is_new;
 }

@@ -6,11 +6,12 @@
 #include <stdbool.h>
 
 #include "civetweb.h"
-
+extern "C" {
 #include "util.h"
+}
 #include "register.h"
 
-char * find_json_end(char * json);
+// char * find_json_end(char * json);
 
 int dynamic_page_request(struct mg_connection * conn, void * cbdata);
 
@@ -55,63 +56,63 @@ int main(void) {
 
 	}
 
-	const char * token = get_token();
+	// const char * token = get_token();
 
-	while (1) {
+	// while (1) {
 
-		const char * entry = poll_RSS("https://www.youtube.com/feeds/videos.xml?channel_id=UC3n5uGu18FoCy23ggWWp8tA");
+	// 	const char * entry = poll_RSS("https://www.youtube.com/feeds/videos.xml?channel_id=UC3n5uGu18FoCy23ggWWp8tA");
 
-		if (is_new_entry(entry)) {
-			puts(entry);
+	// 	if (is_new_entry(entry)) {
+	// 		puts(entry);
 
-			const char * link_start = strstr(entry, "<link rel=\"alternate\" href=\"");
+	// 		const char * link_start = strstr(entry, "<link rel=\"alternate\" href=\"");
 
-			if (link_start) {
-				link_start += 28; // strlen("<link rel=\"alternate\" href=\"");
-				const char * link_end = strstr(link_start, "\"");
+	// 		if (link_start) {
+	// 			link_start += 28; // strlen("<link rel=\"alternate\" href=\"");
+	// 			const char * link_end = strstr(link_start, "\"");
 
-				const char * endpoint = "channels/599365997920649216/messages";
+	// 			const char * endpoint = "channels/599365997920649216/messages";
 
-				output = malloc(256);
-				output_cap = 256;
-				sprintf(output, "{\"content\": \"%.*s\"}", (int)(link_end - link_start), link_start);
-				output_size = strlen(output);
+	// 			output = malloc(256);
+	// 			output_cap = 256;
+	// 			sprintf(output, "{\"content\": \"%.*s\"}", (int)(link_end - link_start), link_start);
+	// 			output_size = strlen(output);
 
-				//char * url = malloc(link_end - link_start + 1);
-				//strncpy(url, link_start, link_end - link_start);
-				//url[link_end - link_start] = 0;
+	// 			//char * url = malloc(link_end - link_start + 1);
+	// 			//strncpy(url, link_start, link_end - link_start);
+	// 			//url[link_end - link_start] = 0;
 
-				//GET(url);
+	// 			//GET(url);
 
-				//char * json = strstr(input, "ytInitialData = ") + 16;
-				//char * json_end = find_json_end(json);
-				//*json_end = 0;
+	// 			//char * json = strstr(input, "ytInitialData = ") + 16;
+	// 			//char * json_end = find_json_end(json);
+	// 			//*json_end = 0;
 
-				Discord_POST(endpoint, token);
+	// 			Discord_POST(endpoint, token);
 
-				free(output);
+	// 			free(output);
 
-				//puts(json);
-			}
-		}
+	// 			//puts(json);
+	// 		}
+	// 	}
 
-		SLEEP(60 * 5);
+	// 	SLEEP(60 * 5);
 
-	}
+	// }
 
 	return 0;
 }
 
-char * find_json_end(char * json) {
-	size_t count = 0;
-	if (*json != '{') return NULL;
-	do {
-		if (*json == '{') count++;
-		if (*json == '}') count--;
-		json++;
-	} while (count);
-	return json;
-}
+// char * find_json_end(char * json) {
+// 	size_t count = 0;
+// 	if (*json != '{') return NULL;
+// 	do {
+// 		if (*json == '{') count++;
+// 		if (*json == '}') count--;
+// 		json++;
+// 	} while (count);
+// 	return json;
+// }
 
 volatile int count = 0;
 

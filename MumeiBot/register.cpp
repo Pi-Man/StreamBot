@@ -78,6 +78,7 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 		output = (char*) malloc(form.length());
 		memcpy(output, form.c_str(), form.length());
 		output_size = output_cap = form.length();
+		
 		sprintf(output_type, "application/x-www-form-urlencoded");
 		POST(TOKEN_URL, NULL, NULL, NULL);
 		mg_printf(conn, "<h1>Authorized</h1>");
