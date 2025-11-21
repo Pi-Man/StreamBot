@@ -76,12 +76,18 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 
 		output_type = "application/x-www-form-urlencoded";
 		POST(TOKEN_URL, NULL, NULL, NULL);
-		mg_printf(conn, "<h1>Authorized</h1>");
 		std::string json = input;
 		size_t start = json.find("\"expires_in\"");
 		size_t end = json.find(',', start);
-		mg_printf(conn, "<pre><code>%s</code></pre>", json.substr(start, end - start).c_str());
-		mg_printf(conn, "</body></html>\n");
+		if (start == std::string::npos) {
+			mg_printf(conn, "<h1>Unauthorized</h1>");
+			mg_printf(conn, "</body></html>\n");
+		}
+		else {
+			mg_printf(conn, "<h1>Authorized</h1>");
+			mg_printf(conn, "<pre><code>%s</code></pre>", json.substr(start, end - start).c_str());
+			mg_printf(conn, "</body></html>\n");
+		}
 		return 1;
 	}
 	return 0;

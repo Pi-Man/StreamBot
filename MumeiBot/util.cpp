@@ -113,7 +113,7 @@ CURLcode POST(const std::string & url, struct curl_slist * header, const char * 
 	THROW_CURL(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data), CLEANUP);
 	THROW_CURL(curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, output.length()), CLEANUP);
 	THROW_CURL(curl_easy_setopt(curl, CURLOPT_POST, 1), CLEANUP);
-	THROW_CURL(curl_easy_setopt(curl, CURLOPT_URL, url), CLEANUP);
+	THROW_CURL(curl_easy_setopt(curl, CURLOPT_URL, url.c_str()), CLEANUP);
 
 	THROW_CURL(curl_easy_perform(curl), CLEANUP);
 
