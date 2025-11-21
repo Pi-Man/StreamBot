@@ -1,7 +1,7 @@
 
 
 
-StreamBot: civetweb.o html.o util.o register.o main.o
+StreamBot: civetweb.o html.o util.o register.o htmlform.o main.o
 	g++ -g $^ $(args) -lcurl -o $@
 
 %.o: %.c
@@ -14,4 +14,4 @@ bin:
 	mkdir bin
 
 clean:
-	rm civetweb.o html.o util.o register.o main.o
+	rm civetweb.o html.o util.o register.o htmlform.o main.o
