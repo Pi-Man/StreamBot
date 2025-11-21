@@ -85,7 +85,7 @@ CURLcode GET(const std::string & url) {
 
 	THROW_CURL(curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem"), {});
 	THROW_CURL(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data), {});
-	THROW_CURL(curl_easy_setopt(curl, CURLOPT_URL, url), {});
+	THROW_CURL(curl_easy_setopt(curl, CURLOPT_URL, url.c_str()), {});
 
 	THROW_CURL(curl_easy_perform(curl), {});
 
