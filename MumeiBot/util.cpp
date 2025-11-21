@@ -2,77 +2,64 @@
 
 #include "util.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <ctype.h>
+#include <fstream>
+#include <mutex>
+#include <atomic>
+#include <algorithm>
 
-#ifndef _WIN32
-#define min(a, b) (a) < (b) ? (a) : (b)
-#endif
+#include "htmlform.h"
 
-char * input = NULL;
-size_t input_size = 0;
-size_t input_cap = 0;
+// #ifndef _WIN32
+// #define min(a, b) (a) < (b) ? (a) : (b)
+// #endif
 
-char * output = NULL;
-size_t output_size = 0;
-size_t output_cap = 0;
-size_t output_ptr = 0;
-char output_type[256] = { 0 };
+std::string input;
+
+std::string output;
+std::string output_type;
 
 CURL * curl = NULL;
 
 #define SUB_TIMEOUT 10000
 #define SLEEP_TIME 100
 
-static volatile char * sub_topic;
+static std::mutex sub_mutex;
 
-static volatile bool sub_wait;
+static std::string sub_topic;
 
-static volatile long long sub_lease;
+static std::atomic<bool> sub_wait;
 
-static bool areDigits(const char * str) {
-	bool flag = true;
-	for (const char * c = str; *c && flag; c++) {
-		flag = flag && isdigit(*c);
-	}
-	return flag;
-}
+static long long sub_lease;
 
-char * get_token() {
+// static bool areDigits(const char * str) {
+// 	bool flag = true;
+// 	for (const char * c = str; *c && flag; c++) {
+// 		flag = flag && isdigit(*c);
+// 	}
+// 	return flag;
+// }
 
-	FILE * ftok = fopen("token.txt", "r");
+std::string load_file(const std::string & file_name) {
 
-	if (!ftok) return NULL;
+	std::string contents;
 
-	int n = 0;
-	while (n < 1024 && !feof(ftok)) fgetc(ftok), n++;
+	std::ifstream file(file_name);
 
-	rewind(ftok);
+	file >> contents;
 
-	char * tok = (char*) malloc(n + 1);
-
-	n = 0;
-	while (!feof(ftok)) tok[n] = fgetc(ftok);
-	tok[n] = 0;
-
-	return tok;
+	return contents;
 }
 
 size_t write_data(void * buffer, size_t size, size_t nmemb, void * _) {
 	size_t bytes = size * nmemb;
-	while (input_size + bytes > input_cap) {
-		input = (char*) realloc(input, input_cap *= 2);
-	}
-	memmove(input + input_size, buffer, bytes);
-	input_size += bytes;
+	input.append((const char*)buffer, bytes);
 	return bytes;
 }
 
 size_t read_data(void * buffer, size_t size, size_t nmemb, void * _) {
-	size_t bytes = min(size * nmemb, output_size - output_ptr);
-	memmove(buffer, output + output_ptr, bytes);
-	output_ptr += bytes;
+	size_t bytes = std::min(size * nmemb, output.length());
+	output.copy((char*)buffer, bytes);
+	output.erase(0, bytes);
 	return bytes;
 }
 
@@ -90,16 +77,9 @@ CURLcode init_curl(void) {
 
 }
 
-CURLcode GET(const char * url) {
+CURLcode GET(const std::string & url) {
 
-	if (input) {
-		input_size = 0;
-		*input = 0;
-	}
-	else {
-		input_cap = 16;
-		input = (char*) malloc(input_cap);
-	}
+	input.clear();
 
 	curl_easy_reset(curl);
 
@@ -109,31 +89,20 @@ CURLcode GET(const char * url) {
 
 	THROW_CURL(curl_easy_perform(curl), {});
 
-	write_data((void*)"", 1, 1, NULL);
-
 	return CURLE_OK;
 
 }
 
-CURLcode POST(const char * url, struct curl_slist * header, const char * username, const char * password) {
+CURLcode POST(const std::string & url, struct curl_slist * header, const char * username, const char * password) {
 
-	if (input) {
-		input_size = 0;
-		*input = 0;
-	}
-	else {
-		input_cap = 16;
-		input = (char*) malloc(input_cap);
-	}
+	input.clear();
 
 	curl_easy_reset(curl);
 
 	bool flag = !header;
 
-	char * h = (char*) malloc(14 + strlen(output_type) + 1);
-	sprintf(h, "Content-Type: %s", output_type);
-	header = curl_slist_append(header, h);
-	free(h);
+	std::string content_header = "Content-Type: " + output_type;
+	header = curl_slist_append(header, content_header.c_str());
 
 	#define CLEANUP { if (flag) curl_slist_free_all(header); }
 	if (username) THROW_CURL(curl_easy_setopt(curl, CURLOPT_USERNAME, username), CLEANUP);
@@ -142,15 +111,11 @@ CURLcode POST(const char * url, struct curl_slist * header, const char * usernam
 	THROW_CURL(curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem"), CLEANUP);
 	THROW_CURL(curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_data), CLEANUP);
 	THROW_CURL(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data), CLEANUP);
-	THROW_CURL(curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, output_size), CLEANUP);
+	THROW_CURL(curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, output.length()), CLEANUP);
 	THROW_CURL(curl_easy_setopt(curl, CURLOPT_POST, 1), CLEANUP);
 	THROW_CURL(curl_easy_setopt(curl, CURLOPT_URL, url), CLEANUP);
 
-	output_ptr = 0;
-
 	THROW_CURL(curl_easy_perform(curl), CLEANUP);
-
-	write_data((void*)"", 1, 1, NULL);
 
 	CLEANUP;
 
@@ -160,7 +125,7 @@ CURLcode POST(const char * url, struct curl_slist * header, const char * usernam
 
 }
 
-CURLcode Discord_POST(const char * endpoint, const char * token) {
+CURLcode Discord_POST(const std::string & endpoint, const std::string & token) {
 
 	//if (input) {
 	//	input_size = 0;
@@ -173,34 +138,16 @@ CURLcode Discord_POST(const char * endpoint, const char * token) {
 
 	//curl_easy_reset(curl);
 
-	char * url = (char*) malloc(28 + strlen(endpoint) + 1); // strlne("https://discord.com/api/v10/");
-	char * authorization = (char*) malloc(19 + strlen(token) + 1); // strlen("Authorization: Bot ");
-
-	sprintf(url, "https://discord.com/api/v10/%s", endpoint);
-	sprintf(authorization, "Authorization: Bot %s", token);
+	std::string url = "https://discord.com/api/v10/" + endpoint;
+	std::string authorization = "Authorization: Bot " + token;
 
 	struct curl_slist * header = NULL;
-	header = curl_slist_append(header, authorization);
-	sprintf(output_type, "application/json");
-	//header = curl_slist_append(header, "Content-Type: application/json");
+	header = curl_slist_append(header, authorization.c_str());
+	output_type = "application/json";
 
-	#define CLEANUP { free(url); free(authorization); curl_slist_free_all(header); }
+	#define CLEANUP { curl_slist_free_all(header); }
 
 	THROW_CURL(POST(url, header, NULL, NULL), CLEANUP);
-
-	//THROW_CURL(curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header), CLEANUP);
-	//THROW_CURL(curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem"), CLEANUP);
-	//THROW_CURL(curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_data), CLEANUP);
-	//THROW_CURL(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data), CLEANUP);
-	//THROW_CURL(curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, output_size), CLEANUP);
-	//THROW_CURL(curl_easy_setopt(curl, CURLOPT_POST, 1), CLEANUP);
-	//THROW_CURL(curl_easy_setopt(curl, CURLOPT_URL, url), CLEANUP);
-
-	//output_ptr = 0;
-
-	//THROW_CURL(curl_easy_perform(curl), CLEANUP);
-
-	//write_data("", 1, 1, NULL);
 
 	CLEANUP;
 
@@ -210,42 +157,39 @@ CURLcode Discord_POST(const char * endpoint, const char * token) {
 
 }
 
-char * poll_RSS(const char * url) {
+// char * poll_RSS(const char * url) {
 
-	ERROR_CURL(GET(url), { return NULL; });
+// 	ERROR_CURL(GET(url), { return NULL; });
 
-	char * entry = strstr(input, "<entry>");
+// 	char * entry = strstr(input, "<entry>");
 
-	if (entry) {
+// 	if (entry) {
 
-		char * entry_end = strstr(input, "</entry>");
+// 		char * entry_end = strstr(input, "</entry>");
 
-		if (entry_end) {
-			entry_end += 8; // strlen("</entry>");
-			*entry_end = 0;
-		}
+// 		if (entry_end) {
+// 			entry_end += 8; // strlen("</entry>");
+// 			*entry_end = 0;
+// 		}
 
-		return entry;
-	}
-	return NULL;
-}
+// 		return entry;
+// 	}
+// 	return NULL;
+// }
 
-void subscribe_RSS(const char * url, long long * lease) {
+void subscribe_RSS(const std::string & url, long long * lease) {
 
-	output = (char*) malloc(512);
-	output_cap = 512;
+	output_type = "application/x-www-form-urlencoded";
 
-	sprintf(output_type, "application/x-www-form-urlencoded");
+	output = "hub.callback=https://3.141592.dev/subscriptioncallback&hub.mode=subscribe&hub.topic=" + url;
 
-	snprintf(output, 512, "hub.callback=https://3.141592.dev/subscriptioncallback&hub.mode=subscribe&hub.topic=%s", url);
-
-	output_size = strlen(output);
-
-	sub_topic = strdup(url);
+	sub_mutex.lock();
+	sub_topic = url;
 
 	POST("https://pubsubhubbub.appspot.com/subscribe", NULL, NULL, NULL);
 
 	sub_wait = true;
+	sub_mutex.unlock();
 
 	long long timeout = SUB_TIMEOUT;
 
@@ -259,68 +203,32 @@ void subscribe_RSS(const char * url, long long * lease) {
 		puts("Timed out subscribbing");
 	}
 
-	free(output);
-	free((void*) sub_topic);
-	output = NULL;
-	output_cap = 0;
-	sub_topic = NULL;
+	output = "";
+	sub_mutex.lock();
+	sub_topic = "";
 	if (lease) *lease = sub_lease;
+
+	sub_mutex.unlock();
 }
 
 int confirm_subscription(struct mg_connection * conn, const struct mg_request_info * info) {
 
-	struct {
-		char * mode;
-		char * topic;
-		char * challenge;
-		char * lease;
-	} hub = { 0 };
-
-	char * query = NULL;
-
 	sub_lease = 0;
 
-	if (info->query_string) {
-		query = strdup(info->query_string);
-	}
-	else {
-		query = strdup("");
-	}
+	HTMLForm query_form = info->query_string;
 
-	char * tok = strtok(query, "&");
-
-	while (tok) {
-		if (strncmp(tok, "hub.mode", strlen("hub.mode")) == 0) {
-			tok = strchr(tok, '=') + 1;
-			if (tok == (char *)NULL + 1) break;
-			hub.mode = tok;
-		}
-		else if (strncmp(tok, "hub.topic", strlen("hub.topic")) == 0) {
-			tok = strchr(tok, '=') + 1;
-			if (tok == (char *)NULL + 1) break;
-			mg_url_decode(tok, strlen(tok) + 1, tok, strlen(tok) + 1, true);
-			hub.topic = tok;
-		}
-		else if (strncmp(tok, "hub.challenge", strlen("hub.challenge")) == 0) {
-			tok = strchr(tok, '=') + 1;
-			if (tok == (char *)NULL + 1) break;
-			hub.challenge = tok;
-		}
-		else if (strncmp(tok, "hub.lease_seconds", strlen("hub.lease_seconds")) == 0) {
-			tok = strchr(tok, '=') + 1;
-			if (tok == (char *)NULL + 1) break;
-			hub.lease = tok;
-		}
-		tok = strtok(NULL, "&");
-	}
-
-	bool flag = sub_topic && hub.mode && hub.topic && hub.challenge && hub.lease;
+	bool flag = 
+		!sub_topic.empty() && 
+		query_form.has("hub.mode") && 
+		query_form.has("hub.topic") && 
+		query_form.has("hub.challenge") && 
+		query_form.has("hub.lease");
 
 	if (flag) {
-		flag = flag
-			&& (strcmp(hub.mode, "subscribe") == 0)
-			&& (strcmp(hub.topic, (const char*)sub_topic) == 0)
-			&& areDigits(hub.lease);
+		flag = 
+			query_form["hub.mode"] == "subscribe" && 
+			query_form["hub.topic"] == sub_topic && 
+			std::all_of(query_form["hub.lease"].cbegin(), query_form["hub.lease"].cend(), isdigit);
 	}
 
 	if (!flag) {
@@ -328,55 +236,52 @@ int confirm_subscription(struct mg_connection * conn, const struct mg_request_in
 			"HTTP/1.1 404 Not Found\r\nContent-Type: text/plain\r\nConnection: "
 			"close\r\n\r\n");
 		mg_printf(conn, "Nothing to see here, this endpoint is for pubsubhubbub");
-		free(query);
 		return 1;
 	}
 
 	mg_printf(conn,
 		"HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nConnection: "
 		"close\r\n\r\n");
-	mg_printf(conn, hub.challenge);
+	mg_printf(conn, "%s", query_form["hub.challenge"].c_str());
 
-	sub_lease = atoll(hub.lease);
+	sub_lease = atoll(query_form["hub.lease"].c_str());
 
 	sub_wait = false;
-
-	free(query);
 
 	return 1;
 }
 
-bool is_new_entry(const char * entry_xml) {
+// bool is_new_entry(const char * entry_xml) {
 
-	FILE * f = fopen("last_date.txt", "r");
+// 	FILE * f = fopen("last_date.txt", "r");
 
-	char old_date[64] = { 0 };
-	char new_date[64] = { 0 };
+// 	char old_date[64] = { 0 };
+// 	char new_date[64] = { 0 };
 
-	if (f) {
-		for (int i = 0; i < 63; i++) {
-			char c = fgetc(f);
-			if (feof(f)) break;
-			old_date[i] = c;
-		}
-		fclose(f);
-	}
+// 	if (f) {
+// 		for (int i = 0; i < 63; i++) {
+// 			char c = fgetc(f);
+// 			if (feof(f)) break;
+// 			old_date[i] = c;
+// 		}
+// 		fclose(f);
+// 	}
 
-	const char * date_xml = strstr(entry_xml, "<published>");
-	if (!date_xml) return false;
-	date_xml += 11; // strlen("<published>");
-	const char * date_xml_end = strstr(entry_xml, "</published>");
-	if (!date_xml_end) return false;
+// 	const char * date_xml = strstr(entry_xml, "<published>");
+// 	if (!date_xml) return false;
+// 	date_xml += 11; // strlen("<published>");
+// 	const char * date_xml_end = strstr(entry_xml, "</published>");
+// 	if (!date_xml_end) return false;
 
-	memcpy(new_date, date_xml, min(date_xml_end - date_xml, 63));
+// 	memcpy(new_date, date_xml, min(date_xml_end - date_xml, 63));
 
-	bool is_new = strcmp(old_date, new_date) != 0;
+// 	bool is_new = strcmp(old_date, new_date) != 0;
 
-	if (is_new) {
-		f = fopen("last_date.txt", "w");
-		fwrite(new_date, 1, strlen(new_date), f);
-		fclose(f);
-	}
+// 	if (is_new) {
+// 		f = fopen("last_date.txt", "w");
+// 		fwrite(new_date, 1, strlen(new_date), f);
+// 		fclose(f);
+// 	}
 
-	return is_new;
-}
+// 	return is_new;
+// }

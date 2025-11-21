@@ -1,7 +1,7 @@
 #ifndef _H_UTIL
 #define _H_UTIL
 
-#include <stdbool.h>
+#include <string>
 
 #include <curl/curl.h>
 
@@ -17,14 +17,10 @@
 #define SLEEP(milli) { struct timespec ts; ts.tv_sec = milli / 1000; ts.tv_nsec = (milli % 1000) * 1000000; nanosleep(&ts, NULL); }
 #endif
 
-extern char * input;
-extern size_t input_size;
-extern size_t input_cap;
+extern std::string input;
 
-extern char * output;
-extern size_t output_size;
-extern size_t output_cap;
-extern char output_type[256];
+extern std::string output;
+extern std::string output_type;
 
 
 #define FATAL_CURL(cmd) { CURLcode err = cmd; if (err) { fprintf(stderr, "Fatal Error: %s returned %d \"%s\"", #cmd, err, curl_easy_strerror(err)); exit(err); } }
@@ -32,7 +28,7 @@ extern char output_type[256];
 #define THROW_CURL(cmd, finally) { CURLcode err = cmd; if (err) { finally; return err; } }
 #define WARN_CURL(cmd) { CURLcode err = cmd; if (err) { fprintf(stderr, "WARNING: %s returned %d \"%s\"", #cmd, err, curl_easy_strerror(err)); } }
 
-char * get_token();
+std::string load_file();
 
 size_t write_data(void * buffer, size_t size, size_t nmemb, void * _);
 
@@ -40,18 +36,18 @@ size_t read_data(void * buffer, size_t size, size_t nmemb, void * _);
 
 CURLcode init_curl(void);
 
-CURLcode GET(const char * url);
+CURLcode GET(const std::string & url);
 
-CURLcode POST(const char * url, struct curl_slist * header, const char * username, const char * password);
+CURLcode POST(const std::string & url, struct curl_slist * header, const char * username, const char * password);
 
-CURLcode Discord_POST(const char * endpoint, const char * token);
+CURLcode Discord_POST(const std::string & endpoint, const std::string & token);
 
-char * poll_RSS(const char * url);
+//char * poll_RSS(const char * url);
 
-void subscribe_RSS(const char * url, long long * lease);
+void subscribe_RSS(const std::string & url, long long * lease);
 
 int confirm_subscription(struct mg_connection * conn, const struct mg_request_info * query);
 
-bool is_new_entry(const char * entry_xml);
+//bool is_new_entry(const char * entry_xml);
 
 #endif

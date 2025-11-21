@@ -8,9 +8,8 @@
 #include <string.h>
 #include <malloc.h>
 
-extern "C" {
 #include "util.h"
-}
+#include "htmlform.h"
 
 #define AUTH_URL "https://discord.com/oauth2/authorize?client_id=1336495404308762685&response_type=code&redirect_uri=https%3A%2F%2F3.141592.dev%2Foauth%2Fdiscord%2Fcallback&scope=guilds+guilds.members.read+guilds.channels.read"
 #define TOKEN_URL "https://discord.com/api/oauth2/token"
@@ -67,19 +66,15 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 			"close\r\n\r\n");
 		mg_printf(conn, "<!DOCTYPE html><html><body>");
 
-		std::unordered_map<std::string, std::string> data;
+		HTMLForm data;
 		data["client_id"] = CLIENT_ID;
 		data["client_secret"] = CLIENT_SECRET;
 		data["grant_type"] = "authorization_code";
 		data["code"] = code;
 		data["redirect_uri"] = REDIRECT_URL;
-		std::string form = build_form(data);
+		output = data;
 
-		output = (char*) malloc(form.length());
-		memcpy(output, form.c_str(), form.length());
-		output_size = output_cap = form.length();
-		
-		sprintf(output_type, "application/x-www-form-urlencoded");
+		output_type = "application/x-www-form-urlencoded";
 		POST(TOKEN_URL, NULL, NULL, NULL);
 		mg_printf(conn, "<h1>Authorized</h1>");
 		std::string json = input;
@@ -89,13 +84,5 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 		mg_printf(conn, "</body></html>\n");
 		return 1;
 	}
-	else {
-		mg_printf(conn,
-			"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
-			"close\r\n\r\n");
-		mg_printf(conn, "<!DOCTYPE html><html><body>");
-		mg_printf(conn, "%s", "<a href=" AUTH_URL ">Login</a>");
-		mg_printf(conn, "</body></html>\n");
-		return 1;
-	}
+	return 0;
 }
