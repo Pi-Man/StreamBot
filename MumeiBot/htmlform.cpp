@@ -29,7 +29,7 @@ HTMLForm::HTMLForm(const std::string &form)
 HTMLForm::HTMLForm(const std::string && form) : HTMLForm(form) {
 }
 
-HTMLForm::HTMLForm(const char * form) : HTMLForm(form) {
+HTMLForm::HTMLForm(const char * form) : HTMLForm((std::string) form) {
 }
 
 bool HTMLForm::has(const std::string & key) const {

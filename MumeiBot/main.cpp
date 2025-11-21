@@ -6,9 +6,7 @@
 #include <stdbool.h>
 
 #include "civetweb.h"
-extern "C" {
 #include "util.h"
-}
 #include "register.h"
 
 // char * find_json_end(char * json);
@@ -136,7 +134,6 @@ int subscription_page_request(struct mg_connection * conn, void * cbdata) {
 	else if (strcmp(info->request_method, "POST") == 0) {
 		char buffer[256];
 		int bytes = 0;
-		input_size = 0;
 		do {
 			bytes = mg_read(conn, buffer, 256);
 			write_data(buffer, 1, bytes, NULL);
@@ -144,7 +141,7 @@ int subscription_page_request(struct mg_connection * conn, void * cbdata) {
 		mg_printf(conn,
 			"HTTP/1.1 204 No Content\r\nConnection: "
 			"close\r\n\r\n");
-		puts(input);
+		puts(input.c_str());
 	}
 
 	return 1;

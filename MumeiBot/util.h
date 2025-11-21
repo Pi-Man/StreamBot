@@ -28,13 +28,13 @@ extern std::string output_type;
 #define THROW_CURL(cmd, finally) { CURLcode err = cmd; if (err) { finally; return err; } }
 #define WARN_CURL(cmd) { CURLcode err = cmd; if (err) { fprintf(stderr, "WARNING: %s returned %d \"%s\"", #cmd, err, curl_easy_strerror(err)); } }
 
-std::string load_file();
+std::string load_file(const std::string & file_name);
 
 size_t write_data(void * buffer, size_t size, size_t nmemb, void * _);
 
 size_t read_data(void * buffer, size_t size, size_t nmemb, void * _);
 
-CURLcode init_curl(void);
+CURLcode init_curl();
 
 CURLcode GET(const std::string & url);
 
