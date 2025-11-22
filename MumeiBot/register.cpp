@@ -16,39 +16,6 @@
 #define REDIRECT_URL "https://3.141592.dev/oauth/discord/callback"
 #define CLIENT_ID "1336495404308762685"
 
-std::unordered_map<std::string, std::string> parse_form(const std::string & form) {
-	std::unordered_map<std::string, std::string> fields;
-	size_t index = 0;
-	for (size_t i = 0; i < form.length(); i++) {
-		if (form[i] == '&') {
-			size_t j = form.find('=', index);
-			std::string key = form.substr(index, j - index);
-			std::string val = form.substr(j + 1, i - j - 1);
-			fields[key] = val;
-		}
-	}
-	size_t j = form.find('=', index);
-	std::string key = form.substr(index, j - index);
-	std::string val = form.substr(j + 1);
-	fields[key] = val;
-	return fields;
-}
-
-std::string build_form(const std::unordered_map<std::string, std::string> & fields) {
-	std::string form;
-	char buffer[1024];
-	for (const std::pair<std::string, std::string> & pair : fields) {
-		mg_url_encode(pair.first.c_str(), buffer, 1024);
-		form += buffer;
-		form += "=";
-		mg_url_encode(pair.second.c_str(), buffer, 1024);
-		form += buffer;
-		form += "&";
-	}
-	form.pop_back();
-	return form;
-}
-
 int oauth_callback(struct mg_connection * conn, void * cbdata) {
 
 	const struct mg_request_info * info = mg_get_request_info(conn);
