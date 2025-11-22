@@ -53,13 +53,11 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 
 	const struct mg_request_info * info = mg_get_request_info(conn);
 
-	std::unordered_map<std::string, std::string> query = parse_form(info->query_string);
+	HTMLForm query = info->query_string;
 
-	if (query.find("code") != query.end()) {
+	if (query.has("code")) {
 		std::string code = query["code"];
-		std::ifstream secret_file("secret.txt");
-		std::string CLIENT_SECRET;
-		secret_file >> CLIENT_SECRET;
+		std::string CLIENT_SECRET = load_file("secret.txt");
 		
 		mg_printf(conn,
 			"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
