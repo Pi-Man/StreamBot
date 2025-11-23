@@ -1,7 +1,7 @@
 
 INCLD:=-I./jwt/include
 
-StreamBot: civetweb.o html.o util.o register.o htmlform.o main.o
+StreamBot: civetweb.o html.o util.o register.o htmlform.o httpheaders.o main.o
 	g++ -g $^ $(args) $(INCLD) -lcurl -lssl -lcrypto -o $@
 
 %.o: %.c
