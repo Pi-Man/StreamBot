@@ -1,11 +1,10 @@
+#ifndef _H_REGISTER
+#define _H_REGISTER
+
 #include "civetweb.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+int register_callback(struct mg_connection * conn, void * cbdata);
 
 int oauth_callback(struct mg_connection * conn, void * cbdata);
 
-#ifdef __cplusplus
-}
 #endif

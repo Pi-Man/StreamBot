@@ -6,11 +6,43 @@
 
 #include "util.h"
 #include "htmlform.h"
+#include "httpheaders.h"
 
 #define AUTH_URL "https://discord.com/oauth2/authorize?client_id=1336495404308762685&response_type=code&redirect_uri=https%3A%2F%2F3.141592.dev%2Foauth%2Fdiscord%2Fcallback&scope=guilds+guilds.members.read+guilds.channels.read"
 #define TOKEN_URL "https://discord.com/api/oauth2/token"
 #define REDIRECT_URL "https://3.141592.dev/oauth/discord/callback"
 #define CLIENT_ID "1336495404308762685"
+
+int register_callback(struct mg_connection * conn, void * cbdata) {
+
+	const struct mg_request_info * info = mg_get_request_info(conn);
+	HTTPHeaders request_headers(info->http_headers, info->num_headers);
+
+	if (request_headers.cookies.has("JWT")) {
+		jwt::decoded_jwt jwt = jwt::decode(request_headers.cookies["JWT"]);
+		jwt::claim user = jwt.get_payload_claim("User");
+		jwt::verifier verifier = jwt::verify()
+			.with_type("JWT")
+			.with_issuer("StreamBot")
+			.with_claim("User", user)
+			.allow_algorithm(jwt::algorithm::hs256("streambot"));
+		std::error_code error;
+		verifier.verify(jwt, error);
+		if (!error) {
+			HTTPHeaders response_headers;
+			response_headers["Content-Type"] = "text/html";
+			response_headers["Connection"] = "close";
+			mg_printf(conn,
+				"HTTP/1.1 200 OK\r\n%s", std::string(response_headers).c_str());
+			mg_printf(conn, "<!DOCTYPE html><html><body>");
+			mg_printf(conn, "<p>Welcome %%User%%!</p>");
+			mg_printf(conn, "</body></html>\n");
+			return 1;
+		}
+		mg_send_http_redirect(conn, "/login/", 303);
+		return 1;
+	}
+}
 
 int oauth_callback(struct mg_connection * conn, void * cbdata) {
 
