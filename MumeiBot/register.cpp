@@ -1,17 +1,25 @@
 #include "register.h"
 
 #include <string>
+#include <mutex>
 
 #include <jwt-cpp/jwt.h>
+#include <uuid_v4.h>
 
 #include "util.h"
 #include "htmlform.h"
 #include "httpheaders.h"
 
-#define AUTH_URL "https://discord.com/oauth2/authorize?client_id=1336495404308762685&response_type=code&redirect_uri=https%3A%2F%2F3.141592.dev%2Foauth%2Fdiscord%2Fcallback&scope=guilds+guilds.members.read+guilds.channels.read"
+#define AUTH_URL "https://discord.com/oauth2/authorize?client_id=1336495404308762685&response_type=code&redirect_uri=https%3A%2F%2F3.141592.dev%2Foauth%2Fdiscord%2Fcallback&scope=identify+guilds+guilds.members.read+guilds.channels.read"
 #define TOKEN_URL "https://discord.com/api/oauth2/token"
 #define REDIRECT_URL "https://3.141592.dev/oauth/discord/callback"
 #define CLIENT_ID "1336495404308762685"
+
+static UUIDv4::UUIDGenerator<std::mt19937_64> uuid_generator;
+static std::mutex usermap_mutex;
+static std::unordered_map<std::string, std::pair<std::string, std::string>> usermap;
+static std::unordered_map<std::string, std::string> r_usermap;
+
 
 int register_callback(struct mg_connection * conn, void * cbdata) {
 
@@ -29,13 +37,40 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 		std::error_code error;
 		verifier.verify(jwt, error);
 		if (!error) {
+
+			usermap_mutex.lock();
+			std::string auth_header = "Authorization: Bearer " + usermap[user.as_string()].first;
+			usermap_mutex.unlock();
+
+			curl_slist * header = curl_slist_append(NULL, auth_header.c_str());
+
+			std::string identify_url = "https://discord.com/api/v10/Users/@me";
+
+			GET(identify_url, header, NULL, NULL);
+
+			curl_slist_free_all(header);
+
+			picojson::value json;
+			picojson::parse(json, input);
+			std::string name;
+
+			if (json.get("global_name").is<std::string>()) {
+				name = json.get("global_name").to_str();
+			}
+			else if (json.get("username").is<std::string>()) {
+				name = json.get("username").to_str();
+			}
+			else {
+				name = "nobody";
+			}
+
 			HTTPHeaders response_headers;
 			response_headers["Content-Type"] = "text/html";
 			response_headers["Connection"] = "close";
 			mg_printf(conn,
 				"HTTP/1.1 200 OK\r\n%s", std::string(response_headers).c_str());
 			mg_printf(conn, "<!DOCTYPE html><html><body>");
-			mg_printf(conn, "<p>Welcome %%User%%!</p>");
+			mg_printf(conn, "<p>Welcome %s!</p>", name.c_str());
 			mg_printf(conn, "</body></html>\n");
 			return 1;
 		}
@@ -75,10 +110,26 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 			mg_printf(conn, "</body></html>\n");
 		}
 		else {
+			usermap_mutex.lock();
+			std::string uuid;
+			std::string access_token = json.get("access_token").to_str();
+			std::string refresh_token = json.get("refresh_token").to_str();
+
+			if (r_usermap.find(access_token) != r_usermap.end()) {
+				uuid = r_usermap[access_token];
+			}
+			else {
+				std::string uuid = uuid_generator.getUUID().str();
+				usermap[uuid] = { access_token, refresh_token };
+				r_usermap[access_token] = uuid;
+			}
+				
+			usermap_mutex.unlock();
+
 			std::string token = jwt::create()
 				.set_type("JWT")
 				.set_issuer("StreamBot")
-				.set_payload_claim("User", jwt::claim(std::string("1234")))
+				.set_payload_claim("User", jwt::claim(uuid))
 				.sign(jwt::algorithm::hs256("streambot"));
 
 			mg_printf(conn,
@@ -92,7 +143,6 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 				,
 				token.c_str(),
 				24llu * 3600llu);
-			
 		}
 		return 1;
 	}

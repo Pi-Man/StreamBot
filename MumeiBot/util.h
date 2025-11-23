@@ -36,7 +36,7 @@ size_t read_data(void * buffer, size_t size, size_t nmemb, void * _);
 
 CURLcode init_curl();
 
-CURLcode GET(const std::string & url);
+CURLcode GET(const std::string & url, struct curl_slist * header, const char * username, const char * password);
 
 CURLcode POST(const std::string & url, struct curl_slist * header, const char * username, const char * password);
 

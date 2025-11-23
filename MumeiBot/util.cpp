@@ -77,19 +77,27 @@ CURLcode init_curl(void) {
 
 }
 
-CURLcode GET(const std::string & url) {
+CURLcode GET(const std::string & url, struct curl_slist * header, const char * username, const char * password) {
 
 	input.clear();
 
 	curl_easy_reset(curl);
 
-	THROW_CURL(curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem"), {});
-	THROW_CURL(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data), {});
-	THROW_CURL(curl_easy_setopt(curl, CURLOPT_URL, url.c_str()), {});
+	#define CLEANUP {}
+	if (username) THROW_CURL(curl_easy_setopt(curl, CURLOPT_USERNAME, username), CLEANUP);
+	if (username && password) THROW_CURL(curl_easy_setopt(curl, CURLOPT_PASSWORD, password), CLEANUP);
+	if (header) THROW_CURL(curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header), CLEANUP);
+	THROW_CURL(curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem"), CLEANUP);
+	THROW_CURL(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data), CLEANUP);
+	THROW_CURL(curl_easy_setopt(curl, CURLOPT_URL, url.c_str()), CLEANUP);
 
-	THROW_CURL(curl_easy_perform(curl), {});
+	THROW_CURL(curl_easy_perform(curl), CLEANUP);
+
+	CLEANUP;
 
 	return CURLE_OK;
+
+	#undef CLEANUP
 
 }
 
