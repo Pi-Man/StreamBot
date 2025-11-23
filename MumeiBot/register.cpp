@@ -62,6 +62,7 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 				"HTTP/1.1 303 See Other\r\n"
 				"Location: /register/\r\n"
 				"Content-Length: 0\r\n"
+				"Content-Type: text/html\r\n"
 				"Connection: close\r\n"
 				"Set-Cookie: JWT=%s\r\n"//; Path=/register/; SameSite=Strict; Max-Age=%llu; Secure; HttpOnly\r\n"
 				"\r\n"
