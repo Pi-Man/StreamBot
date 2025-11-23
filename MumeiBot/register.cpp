@@ -1,20 +1,11 @@
 #include "register.h"
 
 #include <string>
-#include <unordered_map>
-#include <fstream>
-#include <chrono>
-//#include <sstream>
-
-//#include <string.h>
-//#include <malloc.h>
 
 #include <jwt-cpp/jwt.h>
 
 #include "util.h"
 #include "htmlform.h"
-
-using namespace std::literals::chrono_literals;
 
 #define AUTH_URL "https://discord.com/oauth2/authorize?client_id=1336495404308762685&response_type=code&redirect_uri=https%3A%2F%2F3.141592.dev%2Foauth%2Fdiscord%2Fcallback&scope=guilds+guilds.members.read+guilds.channels.read"
 #define TOKEN_URL "https://discord.com/api/oauth2/token"
@@ -70,8 +61,6 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 				token.c_str(),
 				24llu * 3600llu);
 			
-			// mg_printf(conn, "<h1>Authorized</h1>");
-			// mg_printf(conn, "<pre><code>%s</code></pre>", json.substr(start, end - start).c_str());
 		}
 		return 1;
 	}
