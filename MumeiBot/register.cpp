@@ -39,9 +39,9 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 			mg_printf(conn, "</body></html>\n");
 			return 1;
 		}
-		mg_send_http_redirect(conn, "/login/", 303);
-		return 1;
 	}
+	mg_send_http_redirect(conn, "/login/", 303);
+	return 1;
 }
 
 int oauth_callback(struct mg_connection * conn, void * cbdata) {

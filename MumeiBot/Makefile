@@ -14,4 +14,4 @@ bin:
 	mkdir bin
 
 clean:
-	rm civetweb.o html.o util.o register.o htmlform.o main.o
+	rm civetweb.o html.o util.o register.o htmlform.o httpheaders.o main.o
