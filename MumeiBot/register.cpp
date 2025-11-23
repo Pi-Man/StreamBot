@@ -106,7 +106,7 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 				"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
 				"close\r\n\r\n");
 			mg_printf(conn, "<!DOCTYPE html><html><body>");
-			mg_printf(conn, "<h1>Unauthorized</h1>");
+			mg_printf(conn, "<h1>Unauthorized</h1><p>%s</p>", json.to_str().c_str());
 			mg_printf(conn, "</body></html>\n");
 		}
 		else {
