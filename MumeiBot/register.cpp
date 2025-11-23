@@ -117,7 +117,7 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 
 			if (r_usermap.find(access_token) != r_usermap.end()) {
 				uuid = r_usermap[access_token];
-				printf("found exisiting user %s\n", uuid);
+				printf("found exisiting user %s\n", uuid.c_str());
 			}
 			else {
 				uuid = uuid_generator.getUUID().str();
