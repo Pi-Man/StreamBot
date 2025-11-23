@@ -12,7 +12,7 @@ HTTPHeaders::HTTPHeaders() {}
 
 HTTPHeaders::HTTPHeaders(const struct mg_header * headers, const int count) {
     for (int i = 0; i < count; i++) {
-        if (stricmp(headers[i].name, "cookies")) {
+        if (stricmp(headers[i].name, "cookie")) {
             cookies = HTTPCookies(headers[i].value);
         }
         else {
