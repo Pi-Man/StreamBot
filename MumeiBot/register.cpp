@@ -64,7 +64,7 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 				"Content-Length: 0\r\n"
 				"Content-Type: text/html\r\n"
 				"Connection: close\r\n"
-				"Set-Cookie: JWT=%s\r\n"//; Path=/register/; SameSite=Strict; Max-Age=%llu; Secure; HttpOnly\r\n"
+				"Set-Cookie: JWT=%s; Domain=3.141592.dev; Path=/register/; SameSite=Strict; Max-Age=%llu; Secure; HttpOnly\r\n"
 				"\r\n"
 				,
 				token.c_str(),
