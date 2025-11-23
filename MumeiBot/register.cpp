@@ -71,6 +71,7 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 				"HTTP/1.1 200 OK\r\n%s", std::string(response_headers).c_str());
 			mg_printf(conn, "<!DOCTYPE html><html><body>");
 			mg_printf(conn, "<p>Welcome %s!</p>", name.c_str());
+			mg_printf(conn, "<p>%s</p>", input.c_str());
 			mg_printf(conn, "</body></html>\n");
 			return 1;
 		}
