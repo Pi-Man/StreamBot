@@ -119,9 +119,9 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 				uuid = r_usermap[access_token];
 			}
 			else {
-				std::string uuid = uuid_generator.getUUID().str();
+				uuid = uuid_generator.getUUID().str();
 				usermap[uuid] = { access_token, refresh_token };
-				r_usermap[access_token] = uuid;
+				r_usermap[access_token] = uuid.c_str();
 			}
 				
 			usermap_mutex.unlock();

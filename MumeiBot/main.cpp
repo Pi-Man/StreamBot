@@ -1,9 +1,9 @@
 #define _CRT_SECURE_NO_WARNINGS
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
+#include <cstring>
+#include <iostream>
+
+#include <uuid_v4.h>
 
 #include "civetweb.h"
 #include "util.h"
