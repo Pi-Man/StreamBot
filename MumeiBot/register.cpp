@@ -61,7 +61,7 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 				name = json.get("username").to_str();
 			}
 			else {
-				name = "nobody";
+				name = user.as_string();
 			}
 
 			HTTPHeaders response_headers;
