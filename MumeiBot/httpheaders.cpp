@@ -1,12 +1,23 @@
 #include "httpheaders.h"
 
+#include <algorithm>
+
 #include "civetweb.h"
+
+static bool stricmp(const std::string & a, const std::string & b) {
+    return std::equal(a.cbegin(), a.cend(), b.cbegin(), b.cend(), [](unsigned char a, unsigned char b) {return tolower(a) == tolower(b);});
+}
 
 HTTPHeaders::HTTPHeaders() {}
 
 HTTPHeaders::HTTPHeaders(const struct mg_header * headers, const int count) {
     for (int i = 0; i < count; i++) {
-        map[headers[i].name] = headers[i].value;
+        if (stricmp(headers[i].name, "cookies")) {
+            cookies = HTTPCookies(headers[i].value);
+        }
+        else {
+            map[headers[i].name] = headers[i].value;
+        }
     }
 }
 
