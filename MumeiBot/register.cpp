@@ -48,7 +48,7 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 
 			curl_slist * header = curl_slist_append(NULL, auth_header.c_str());
 
-			std::string identify_url = "https://discord.com/api/v9/users/@me/";
+			std::string identify_url = "https://discord.com/api/v9/users/@me";
 
 			GET(identify_url, header, NULL, NULL);
 
