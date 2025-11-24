@@ -50,7 +50,7 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 
 			std::string identify_url = "https://discord.com/api/v9/users/@me/";
 
-			GET(identify_url, NULL, NULL, NULL);
+			GET(identify_url, header, NULL, NULL);
 
 			curl_slist_free_all(header);
 
