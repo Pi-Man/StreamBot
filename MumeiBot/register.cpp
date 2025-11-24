@@ -11,7 +11,7 @@
 #include "httpheaders.h"
 
 #ifdef _DEBUG
-#define AUTH_URL "https://discord.com/oauth2/authorize?client_id=1336495404308762685&response_type=code&redirect_uri=localhost%3A65000%2Foauth%2Fdiscord%2Fcallback&scope=identify+guilds+guilds.members.read"
+#define AUTH_URL "https://discord.com/oauth2/authorize?client_id=1336495404308762685&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A65000%2Foauth%2Fdiscord%2Fcallback&scope=identify+guilds+guilds.members.read"
 #else
 #define AUTH_URL "https://discord.com/oauth2/authorize?client_id=1336495404308762685&response_type=code&redirect_uri=https%3A%2F%2F3.141592.dev%2Foauth%2Fdiscord%2Fcallback&scope=identify+guilds+guilds.members.read+guilds.channels.read"
 #endif
@@ -52,8 +52,6 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 
 			GET(identify_url, header, NULL, NULL);
 
-			curl_slist_free_all(header);
-
 			picojson::value json;
 			picojson::parse(json, input);
 			std::string name;
@@ -65,8 +63,11 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 				name = json.get("username").to_str();
 			}
 			else {
-				name = user.as_string();
+				name = "nobody";
 			}
+
+			GET("https://discord.com/api/v9/users/@me/guilds", header, NULL, NULL);
+			picojson::parse(json, input);
 
 			HTTPHeaders response_headers;
 			response_headers["Content-Type"] = "text/html";
@@ -106,12 +107,12 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 		POST(TOKEN_URL, NULL, NULL, NULL);
 		picojson::value json;
 		picojson::parse(json, input);
-		if (!json.contains("access_token")) {
+		if (!(json.get("access_token").is<std::string>() && json.get("refresh_token").is<std::string>())) {
 			mg_printf(conn,
 				"HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
 				"close\r\n\r\n");
 			mg_printf(conn, "<!DOCTYPE html><html><body>");
-			mg_printf(conn, "<h1>Unauthorized</h1><p>%s</p>", json.to_str().c_str());
+			mg_printf(conn, "<h1>Unauthorized</h1><p>%s</p>", input.c_str());
 			mg_printf(conn, "</body></html>\n");
 		}
 		else {
