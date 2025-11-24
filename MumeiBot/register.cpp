@@ -10,7 +10,11 @@
 #include "htmlform.h"
 #include "httpheaders.h"
 
+#ifdef _DEBUG
+#define AUTH_URL "https://discord.com/oauth2/authorize?client_id=1336495404308762685&response_type=code&redirect_uri=localhost%3A65000%2Foauth%2Fdiscord%2Fcallback&scope=identify+guilds+guilds.members.read"
+#else
 #define AUTH_URL "https://discord.com/oauth2/authorize?client_id=1336495404308762685&response_type=code&redirect_uri=https%3A%2F%2F3.141592.dev%2Foauth%2Fdiscord%2Fcallback&scope=identify+guilds+guilds.members.read+guilds.channels.read"
+#endif
 #define TOKEN_URL "https://discord.com/api/oauth2/token"
 #define REDIRECT_URL "https://3.141592.dev/oauth/discord/callback"
 #define CLIENT_ID "1336495404308762685"
@@ -44,7 +48,7 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 
 			curl_slist * header = curl_slist_append(NULL, auth_header.c_str());
 
-			std::string identify_url = "https://discord.com/api/v10/users/@me/";
+			std::string identify_url = "https://discord.com/api/v9/users/@me/";
 
 			GET(identify_url, NULL, NULL, NULL);
 
