@@ -76,7 +76,22 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 				"HTTP/1.1 200 OK\r\n%s", std::string(response_headers).c_str());
 			mg_printf(conn, "<!DOCTYPE html><html><body>");
 			mg_printf(conn, "<p>Welcome %s!</p>", name.c_str());
-			mg_printf(conn, "<p>%s</p>", input.c_str());
+			if (json.is<picojson::array>()) {
+				picojson::array jobj = json.get<picojson::array>();
+				mg_printf(conn, "<select name=\"guild\" id = \"guild\">");
+				for (const picojson::value & val : jobj) {
+					if (val.is<picojson::object>()) {
+						picojson::object guild = val.get<picojson::object>();
+						picojson::value nameval = guild["name"];
+						if (nameval.is<std::string>()) {
+							std::string name = nameval.get<std::string>();
+							mg_printf(conn, "<option value=\"%s\">%s</option>", name.c_str(), name.c_str());
+						}
+					}
+				}
+				mg_printf(conn, "</select>");
+			}
+			//mg_printf(conn, "<p>%s</p>", input.c_str());
 			mg_printf(conn, "</body></html>\n");
 			return 1;
 		}
