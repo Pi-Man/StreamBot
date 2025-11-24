@@ -40,11 +40,12 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 			.allow_algorithm(jwt::algorithm::hs256("streambot"));
 		std::error_code error;
 		verifier.verify(jwt, error);
-		if (!error) {
+		usermap_mutex.lock();
+		std::string auth_token = usermap.find(user.as_string()) == usermap.end() ? "" : usermap[user.as_string()].first;
+		usermap_mutex.unlock();
+		if (!error && !auth_token.empty()) {
 
-			usermap_mutex.lock();
-			std::string auth_header = "Authorization: Bearer " + usermap[user.as_string()].first;
-			usermap_mutex.unlock();
+			std::string auth_header = "Authorization: Bearer " + auth_token;
 
 			curl_slist * header = curl_slist_append(NULL, auth_header.c_str());
 
@@ -91,7 +92,6 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 				}
 				mg_printf(conn, "</select>");
 			}
-			//mg_printf(conn, "<p>%s</p>", input.c_str());
 			mg_printf(conn, "</body></html>\n");
 			return 1;
 		}
