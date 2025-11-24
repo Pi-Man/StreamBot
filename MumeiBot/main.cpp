@@ -44,11 +44,11 @@ int main(void) {
 
 	FATAL_CURL(init_curl());
 
-	long long lease = 0;
+	long long lease = 3600 * 24 * 7;
 
 	while (1) {
 		#ifndef _DEBUG
-		subscribe_RSS("https://www.youtube.com/xml/feeds/videos.xml?channel_id=UCcHHkJ98eSfa5aj0mdTwwLQ", &lease);
+		//subscribe_RSS("https://www.youtube.com/xml/feeds/videos.xml?channel_id=UCcHHkJ98eSfa5aj0mdTwwLQ", &lease);
 		#endif
 
 		SLEEP(lease * 1000);
