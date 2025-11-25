@@ -18,12 +18,56 @@
 #define TOKEN_URL "https://discord.com/api/oauth2/token"
 #define REDIRECT_URL "https://3.141592.dev/oauth/discord/callback"
 #define CLIENT_ID "1336495404308762685"
+#define CLIENT_SECRET load_file("secret.txt")
 
 static UUIDv4::UUIDGenerator<std::mt19937_64> uuid_generator;
 static std::mutex usermap_mutex;
 static std::unordered_map<std::string, std::pair<std::string, std::string>> usermap;
 static std::unordered_map<std::string, std::string> r_usermap;
 
+int logout_callback(struct mg_connection * conn, void * cbdata) {
+
+	const struct mg_request_info * info = mg_get_request_info(conn);
+	HTTPHeaders request_headers(info->http_headers, info->num_headers);
+	if (request_headers.cookies.has("JWT")) {
+		jwt::decoded_jwt jwt = jwt::decode(request_headers.cookies["JWT"]);
+		jwt::claim user = jwt.get_payload_claim("User");
+		jwt::verifier verifier = jwt::verify()
+			.with_type("JWT")
+			.with_issuer("StreamBot")
+			.with_claim("User", user)
+			.allow_algorithm(jwt::algorithm::hs256("streambot"));
+		std::error_code error;
+		verifier.verify(jwt, error);
+		usermap_mutex.lock();
+		std::string auth_token = usermap.find(user.as_string()) == usermap.end() ? "" : usermap[user.as_string()].first;
+		usermap_mutex.unlock();
+		if (!error && !auth_token.empty()) {
+			usermap.erase(user.as_string());
+			r_usermap.erase(auth_token);
+			HTMLForm form;
+			form["token"] = auth_token;
+			form["token_type_hint"] = "access_token";
+			form["client_id"] = CLIENT_ID;
+			form["client_secret"] = CLIENT_SECRET;
+			output_type = "application/x-www-form-urlencoded";
+			POST(TOKEN_URL "/revoke", NULL, NULL, NULL);
+			puts(input.c_str());
+		}
+	}
+
+	HTTPHeaders response_headers;
+	response_headers["Content-Type"] = "text/html; charset=utf-8";
+	response_headers["Clear-Site-Data: "] = "\"cookies\"";
+	response_headers["Connection"] = "close";
+	mg_printf(conn,
+		"HTTP/1.1 200 OK\r\n%s", std::string(response_headers).c_str());
+	mg_printf(conn, "<!DOCTYPE html><title>Register New Link</title><html><body>");
+	mg_printf(conn, "<p>Goodbye!</p>");
+	mg_printf(conn, "</body></html>");
+
+	return 1;
+}
 
 int register_callback(struct mg_connection * conn, void * cbdata) {
 
@@ -66,32 +110,22 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 			else {
 				name = "nobody";
 			}
-
-			GET("https://discord.com/api/v9/users/@me/guilds", header, NULL, NULL);
-			picojson::parse(json, input);
+			
+			std::vector<std::string> guilds = get_guilds(auth_token);
 
 			HTTPHeaders response_headers;
-			response_headers["Content-Type"] = "text/html";
+			response_headers["Content-Type"] = "text/html; charset=utf-8";
 			response_headers["Connection"] = "close";
 			mg_printf(conn,
 				"HTTP/1.1 200 OK\r\n%s", std::string(response_headers).c_str());
 			mg_printf(conn, "<!DOCTYPE html><title>Register New Link</title><html><body>");
 			mg_printf(conn, "<p>Welcome %s!</p>", name.c_str());
-			if (json.is<picojson::array>()) {
-				picojson::array jobj = json.get<picojson::array>();
-				mg_printf(conn, "<select name=\"guild\" id = \"guild\">");
-				for (const picojson::value & val : jobj) {
-					if (val.is<picojson::object>()) {
-						picojson::object guild = val.get<picojson::object>();
-						picojson::value nameval = guild["name"];
-						if (nameval.is<std::string>()) {
-							std::string name = nameval.get<std::string>();
-							mg_printf(conn, "<option value=\"%s\">%s</option>", name.c_str(), name.c_str());
-						}
-					}
-				}
-				mg_printf(conn, "</select>");
+			mg_printf(conn, "<select name=\"guild\" id = \"guild\">");
+			for (const std::string & name : guilds) {
+				mg_printf(conn, "<option value=\"%s\">%s</option>", name.c_str(), name.c_str());
 			}
+			mg_printf(conn, "</select>");
+			mg_printf(conn, "<a href=\"/register/logout/\">Logout</a>");
 			mg_printf(conn, "</body></html>\n");
 			return 1;
 		}
@@ -108,7 +142,6 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 
 	if (query.has("code")) {
 		std::string code = query["code"];
-		std::string CLIENT_SECRET = load_file("secret.txt");
 
 		HTMLForm data;
 		data["client_id"] = CLIENT_ID;

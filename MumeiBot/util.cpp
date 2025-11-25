@@ -7,6 +7,8 @@
 #include <atomic>
 #include <algorithm>
 
+#include <picojson/picojson.h>
+
 #include "htmlform.h"
 
 // #ifndef _WIN32
@@ -260,6 +262,36 @@ int confirm_subscription(struct mg_connection * conn, const struct mg_request_in
 	sub_wait = false;
 
 	return 1;
+}
+
+std::vector<std::string> get_guilds(const std::string &auth_token) {
+
+    std::vector<std::string> guilds;
+
+	std::string auth_header = "Authorization: Bearer " + auth_token;
+	curl_slist * header = curl_slist_append(NULL, auth_header.c_str());
+
+	GET("https://discord.com/api/v9/users/@me/guilds", header, NULL, NULL);
+
+	picojson::value json_doc;
+	picojson::parse(json_doc, input);
+
+	if (json_doc.is<picojson::array>()) {
+		const picojson::array & json_arr = json_doc.get<picojson::array>();
+		for (const picojson::value & guild_val : json_arr) {
+			if (guild_val.is<picojson::object>()) {
+				const picojson::object & guild_obj = guild_val.get<picojson::object>();
+				const picojson::value & name_val = guild_obj.find("name") == guild_obj.end() ? picojson::value{} : guild_obj.at("name");
+				if (name_val.is<std::string>()) {
+					guilds.push_back(name_val.get<std::string>());
+				}
+			}
+		}
+	}
+
+	std::sort(guilds.begin(), guilds.end());
+
+	return guilds;
 }
 
 // bool is_new_entry(const char * entry_xml) {

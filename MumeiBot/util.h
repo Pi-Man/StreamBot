@@ -2,6 +2,7 @@
 #define _H_UTIL
 
 #include <string>
+#include <vector>
 
 #include <curl/curl.h>
 
@@ -47,6 +48,8 @@ CURLcode Discord_POST(const std::string & endpoint, const std::string & token);
 void subscribe_RSS(const std::string & url, long long * lease);
 
 int confirm_subscription(struct mg_connection * conn, const struct mg_request_info * query);
+
+std::vector<std::string> get_guilds(const std::string & auth_token);
 
 //bool is_new_entry(const char * entry_xml);
 
