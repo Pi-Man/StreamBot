@@ -189,15 +189,18 @@ void subscribe_RSS(const std::string & url, long long * lease) {
 
 	output_type = "application/x-www-form-urlencoded";
 
-	output = "hub.callback=https://3.141592.dev/subscriptioncallback&hub.mode=subscribe&hub.topic=" + url;
+	HTMLForm hubform;
+	hubform["hub.callback"] = "https://3.141592.dev/subscriptioncallback";
+	hubform["hub.mode"] = "subscribe";
+	hubform["hub.topic"] = url;
+	output = hubform;
 
 	sub_mutex.lock();
 	sub_topic = url;
-
-	POST("https://pubsubhubbub.appspot.com/subscribe", NULL, NULL, NULL);
-
 	sub_wait = true;
 	sub_mutex.unlock();
+
+	POST("https://pubsubhubbub.appspot.com/subscribe", NULL, NULL, NULL);
 
 	long long timeout = SUB_TIMEOUT;
 
@@ -236,7 +239,7 @@ int confirm_subscription(struct mg_connection * conn, const struct mg_request_in
 		flag = 
 			query_form["hub.mode"] == "subscribe" && 
 			query_form["hub.topic"] == sub_topic && 
-			std::all_of(query_form["hub.lease"].cbegin(), query_form["hub.lease"].cend(), isdigit);
+			std::all_of(query_form["hub.lease"].begin(), query_form["hub.lease"].end(), isdigit);
 	}
 
 	if (!flag) {
