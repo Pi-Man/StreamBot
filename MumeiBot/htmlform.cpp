@@ -26,11 +26,9 @@ HTMLForm::HTMLForm(const std::string &form)
 	map[key] = val;
 }
 
-HTMLForm::HTMLForm(const std::string && form) : HTMLForm(form) {
-}
+HTMLForm::HTMLForm(const std::string && form) : HTMLForm(form) {}
 
-HTMLForm::HTMLForm(const char * form) : HTMLForm((std::string) form) {
-}
+HTMLForm::HTMLForm(const char * form) : HTMLForm(form ? std::string{form} : std::string{}) {}
 
 bool HTMLForm::has(const std::string & key) const {
     return map.find(key) != map.end();
