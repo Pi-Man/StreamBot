@@ -271,9 +271,9 @@ int confirm_subscription(struct mg_connection * conn, const struct mg_request_in
 	return 1;
 }
 
-std::vector<std::string> get_permissive_guild_names(const std::string &auth_token) {
+std::vector<Guild> get_guilds(const std::string &auth_token) {
 
-    std::vector<std::string> guilds;
+    std::vector<Guild> guilds;
 
 	std::string auth_header = "Authorization: Bearer " + auth_token;
 	curl_slist * header = curl_slist_append(NULL, auth_header.c_str());
@@ -286,21 +286,11 @@ std::vector<std::string> get_permissive_guild_names(const std::string &auth_toke
 	if (json_doc.is<picojson::array>()) {
 		const picojson::array & json_arr = json_doc.get<picojson::array>();
 		for (const picojson::value & guild_val : json_arr) {
-			if (guild_val.is<picojson::object>()) {
-				const picojson::object & guild_obj = guild_val.get<picojson::object>();
-				const picojson::value & name_val = guild_obj.find("name") == guild_obj.end() ? picojson::value{} : guild_obj.at("name");
-				const picojson::value & perm_val = guild_obj.find("permissions") == guild_obj.end() ? picojson::value{} : guild_obj.at("permissions");
-				if (name_val.is<std::string>() && perm_val.is<int64_t>()) {
-					int64_t perms = perm_val.get<int64_t>();
-					if (perms & ((1 << 5) | (1 << 3))) {
-						guilds.push_back(name_val.get<std::string>());
-					}
-				}
-			}
+			guilds.push_back(guild_val);
 		}
 	}
 
-	std::sort(guilds.begin(), guilds.end());
+	std::sort(guilds.begin(), guilds.end(), [](const Guild & a, const Guild & b){ return a.name < b.name; });
 
 	return guilds;
 }

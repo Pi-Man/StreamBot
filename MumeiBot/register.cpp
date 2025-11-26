@@ -112,7 +112,7 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 				name = "nobody";
 			}
 
-			std::vector<std::string> guilds = get_permissive_guild_names(auth_token);
+			std::vector<Guild> guilds = get_guilds(auth_token);
 
 			HTTPHeaders response_headers;
 			response_headers["Content-Type"] = "text/html; charset=utf-8";
@@ -122,8 +122,8 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 			mg_printf(conn, "<!DOCTYPE html><title>Register New Link</title><html><body>");
 			mg_printf(conn, "<p>Welcome %s!</p>", name.c_str());
 			mg_printf(conn, "<select name=\"guild\" id = \"guild\">");
-			for (const std::string & name : guilds) {
-				mg_printf(conn, "<option value=\"%s\">%s</option>", name.c_str(), name.c_str());
+			for (const Guild & guild : guilds) {
+				mg_printf(conn, "<option value=\"%s\">%s {%lu} p->%lu</option>", guild.name.c_str(), guild.name.c_str(), guild.id, guild.permissions);
 			}
 			mg_printf(conn, "</select>");
 			mg_printf(conn, "<a href=\"/register/logout/\">Logout</a>");

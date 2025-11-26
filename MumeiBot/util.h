@@ -7,6 +7,7 @@
 #include <curl/curl.h>
 
 #include "civetweb.h"
+#include "guild.h"
 
 #ifdef _WIN32
 //#include <Windows.h>
@@ -49,7 +50,7 @@ void subscribe_RSS(const std::string & url, long long * lease);
 
 int confirm_subscription(struct mg_connection * conn, const struct mg_request_info * query);
 
-std::vector<std::string> get_permissive_guild_names(const std::string & auth_token);
+std::vector<Guild> get_guilds(const std::string & auth_token);
 
 //bool is_new_entry(const char * entry_xml);
 
