@@ -24,9 +24,9 @@ Guild::Guild() : id(0), name(""), permissions(0) {}
 Guild::Guild(const picojson::value & json) : Guild() {
     if (json.is<picojson::object>()) {
         const picojson::object & guild_obj = json.get<picojson::object>();
-        id = get_or_default<int64_t>(guild_obj, "id", 20);
+        id = atoll(get_or_default<std::string>(guild_obj, "id", "0").c_str());
         name = get_or_default<std::string>(guild_obj, "name", "");
-        permissions = get_or_default<int64_t>(guild_obj, "permissions", 10);
+        permissions = atoll(get_or_default<std::string>(guild_obj, "permissions", "0").c_str());
     }
 }
 
