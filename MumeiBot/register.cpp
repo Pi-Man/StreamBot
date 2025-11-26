@@ -123,7 +123,8 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 			mg_printf(conn, "<p>Welcome %s!</p>", name.c_str());
 			mg_printf(conn, "<select name=\"guild\" id = \"guild\">");
 			for (const Guild & guild : guilds) {
-				mg_printf(conn, "<option value=\"%s\">%s {%lu} p->%lu</option>", guild.name.c_str(), guild.name.c_str(), guild.id, guild.permissions);
+				if (guild.permissions & ((1 << 5)))
+					mg_printf(conn, "<option value=\"%s\">%s {%lu} p->%lu</option>", guild.name.c_str(), guild.name.c_str(), guild.id, guild.permissions);
 			}
 			mg_printf(conn, "</select>");
 			mg_printf(conn, "<a href=\"/register/logout/\">Logout</a>");
