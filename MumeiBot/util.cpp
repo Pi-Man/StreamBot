@@ -292,7 +292,7 @@ std::vector<std::string> get_permissive_guild_names(const std::string &auth_toke
 				const picojson::value & perm_val = guild_obj.find("permissions") == guild_obj.end() ? picojson::value{} : guild_obj.at("permissions");
 				if (name_val.is<std::string>() && perm_val.is<int64_t>()) {
 					int64_t perms = perm_val.get<int64_t>();
-					if (perms & (1 << 5)) {
+					if (perms & ((1 << 5) | (1 << 3))) {
 						guilds.push_back(name_val.get<std::string>());
 					}
 				}
