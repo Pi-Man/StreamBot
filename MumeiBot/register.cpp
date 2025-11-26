@@ -178,7 +178,7 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 				uuid = uuid_generator.getUUID().str();
 				usermap[uuid] = { access_token, refresh_token };
 				r_usermap[access_token] = uuid.c_str();
-				printf("created new user %s", uuid.c_str());
+				printf("created new user %s\n", uuid.c_str());
 			}
 				
 			usermap_mutex.unlock();
