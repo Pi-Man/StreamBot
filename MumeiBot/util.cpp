@@ -7,6 +7,7 @@
 #include <atomic>
 #include <algorithm>
 
+#define PICOJSON_USE_INT64
 #include <picojson/picojson.h>
 
 #include "htmlform.h"
