@@ -270,7 +270,7 @@ int confirm_subscription(struct mg_connection * conn, const struct mg_request_in
 	return 1;
 }
 
-std::vector<std::string> get_guilds(const std::string &auth_token) {
+std::vector<std::string> get_permissive_guild_names(const std::string &auth_token) {
 
     std::vector<std::string> guilds;
 
@@ -288,8 +288,12 @@ std::vector<std::string> get_guilds(const std::string &auth_token) {
 			if (guild_val.is<picojson::object>()) {
 				const picojson::object & guild_obj = guild_val.get<picojson::object>();
 				const picojson::value & name_val = guild_obj.find("name") == guild_obj.end() ? picojson::value{} : guild_obj.at("name");
-				if (name_val.is<std::string>()) {
-					guilds.push_back(name_val.get<std::string>());
+				const picojson::value & perm_val = guild_obj.find("permissions") == guild_obj.end() ? picojson::value{} : guild_obj.at("permissions");
+				if (name_val.is<std::string>() && perm_val.is<int64_t>()) {
+					int64_t perms = perm_val.get<int64_t>();
+					if (perms & (1 << 5)) {
+						guilds.push_back(name_val.get<std::string>());
+					}
 				}
 			}
 		}

@@ -111,8 +111,8 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 			else {
 				name = "nobody";
 			}
-			
-			std::vector<std::string> guilds = get_guilds(auth_token);
+
+			std::vector<std::string> guilds = get_permissive_guild_names(auth_token);
 
 			HTTPHeaders response_headers;
 			response_headers["Content-Type"] = "text/html; charset=utf-8";
