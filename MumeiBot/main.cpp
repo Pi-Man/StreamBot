@@ -131,9 +131,11 @@ int subscription_page_request(struct mg_connection * conn, void * cbdata) {
 	const struct mg_request_info * info = mg_get_request_info(conn);
 
 	if (strcmp(info->request_method, "GET") == 0) {
+		puts("GET subscription");
 		return confirm_subscription(conn, info);
 	}
 	else if (strcmp(info->request_method, "POST") == 0) {
+		puts("POST subscription");
 		char buffer[256];
 		int bytes = 0;
 		do {

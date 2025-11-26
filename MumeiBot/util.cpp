@@ -204,6 +204,8 @@ void subscribe_RSS(const std::string & url, long long * lease) {
 
 	POST("https://pubsubhubbub.appspot.com/subscribe", NULL, NULL, NULL);
 
+	puts(input.c_str());
+
 	long long timeout = SUB_TIMEOUT;
 
 	while (sub_wait && timeout) {
