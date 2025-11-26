@@ -4,8 +4,7 @@
 
 HTMLForm::HTMLForm() {}
 
-HTMLForm::HTMLForm(const std::string &form)
-{
+HTMLForm::HTMLForm(const std::string &form) {
     size_t index = 0;
     char buffer[1024];
 	for (size_t i = 0; i < form.length(); i++) {
@@ -18,6 +17,7 @@ HTMLForm::HTMLForm(const std::string &form)
             mg_url_decode(val.c_str(), val.length(), buffer, 1024, true);
             val = buffer;
 			map[key] = val;
+			index = i + 1;
 		}
 	}
 	size_t j = form.find('=', index);

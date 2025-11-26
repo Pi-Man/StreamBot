@@ -234,6 +234,8 @@ int confirm_subscription(struct mg_connection * conn, const struct mg_request_in
 
 	HTMLForm query_form = info->query_string;
 
+	puts(info->local_uri_raw);
+
 	bool flag = 
 		!sub_topic.empty() && 
 		query_form.has("hub.mode") && 
