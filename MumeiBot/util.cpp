@@ -241,13 +241,13 @@ int confirm_subscription(struct mg_connection * conn, const struct mg_request_in
 		query_form.has("hub.mode") && 
 		query_form.has("hub.topic") && 
 		query_form.has("hub.challenge") && 
-		query_form.has("hub.lease");
+		query_form.has("hub.lease_seconds");
 
 	if (flag) {
 		flag = 
 			query_form["hub.mode"] == "subscribe" && 
 			query_form["hub.topic"] == sub_topic && 
-			std::all_of(query_form["hub.lease"].begin(), query_form["hub.lease"].end(), isdigit);
+			std::all_of(query_form["hub.lease_seconds"].begin(), query_form["hub.lease_seconds"].end(), isdigit);
 	}
 
 	if (!flag) {
@@ -263,7 +263,7 @@ int confirm_subscription(struct mg_connection * conn, const struct mg_request_in
 		"close\r\n\r\n");
 	mg_printf(conn, "%s", query_form["hub.challenge"].c_str());
 
-	sub_lease = atoll(query_form["hub.lease"].c_str());
+	sub_lease = atoll(query_form["hub.lease_seconds"].c_str());
 
 	sub_wait = false;
 
