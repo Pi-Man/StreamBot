@@ -49,7 +49,7 @@ int main(void) {
 
 	while (1) {
 		#ifndef _DEBUG
-		//subscribe_RSS("https://www.youtube.com/xml/feeds/videos.xml?channel_id=UCcHHkJ98eSfa5aj0mdTwwLQ", &lease);
+		subscribe_RSS("https://www.youtube.com/xml/feeds/videos.xml?channel_id=UCcHHkJ98eSfa5aj0mdTwwLQ", &lease);
 		#endif
 
 		SLEEP(lease * 1000);
