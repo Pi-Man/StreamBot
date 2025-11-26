@@ -228,6 +228,8 @@ void subscribe_RSS(const std::string & url, long long * lease) {
 
 int confirm_subscription(struct mg_connection * conn, const struct mg_request_info * info) {
 
+	std::lock_guard lock(sub_mutex);
+
 	sub_lease = 0;
 
 	HTMLForm query_form = info->query_string;
