@@ -50,6 +50,7 @@ int logout_callback(struct mg_connection * conn, void * cbdata) {
 			form["token_type_hint"] = "access_token";
 			form["client_id"] = CLIENT_ID;
 			form["client_secret"] = CLIENT_SECRET;
+			output = form;
 			output_type = "application/x-www-form-urlencoded";
 			POST(TOKEN_URL "/revoke", NULL, NULL, NULL);
 			puts(input.c_str());
