@@ -9,7 +9,7 @@ static picojson::value parse(const std::string & str) {
 template<typename T>
 static const T & get_or_default(const picojson::object & obj, const std::string & key, const T & def) {
     if (obj.find(key) != obj.end()) {
-        const picojson::value & val = obj.at("key");
+        const picojson::value & val = obj.at(key);
         if (val.is<T>()) return val.get<T>();
     }
     return def;
