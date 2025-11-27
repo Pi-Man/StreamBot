@@ -48,7 +48,10 @@ std::string load_file(const std::string & file_name) {
 
 	std::ifstream file(file_name);
 
-	file >> contents;
+	while (!file.eof()) {
+		int c = file.get();
+		if (c != EOF) contents.push_back(c);
+	}
 
 	return contents;
 }

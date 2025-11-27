@@ -21,11 +21,7 @@ int main(void) {
 
 	struct mg_callbacks callbacks = { 0 };
 	const char * options[] = {
-		#ifdef _DEBUG
-		"document_root", "./webserver/root/",
-		#else
-		"document_root", "/home/ubuntu/webserver/root/",
-		#endif
+		"document_root", WEB_ROOT,
 		"enable_directory_listing", "no",
 		"static_file_max_age", "0",
 		"enable_auth_domain_check", "no",
@@ -37,6 +33,7 @@ int main(void) {
 
 	struct mg_context * ctx = mg_start(&callbacks, NULL, options);
 
+	mg_set_request_handler(ctx, "/register/login/$", login_callback, NULL);
 	mg_set_request_handler(ctx, "/register/logout/$", logout_callback, NULL);
 	mg_set_request_handler(ctx, "/oauth/discord/callback", oauth_callback, NULL);
 	mg_set_request_handler(ctx, "/register/$", register_callback, NULL);

@@ -19,6 +19,12 @@
 #define SLEEP(milli) { struct timespec ts; ts.tv_sec = milli / 1000; ts.tv_nsec = (milli % 1000) * 1000000; nanosleep(&ts, NULL); }
 #endif
 
+#ifdef _DEBUG
+#define WEB_ROOT "./webserver/root/"
+#else
+#define WEB_ROOT "/home/ubuntu/webserver/root/"
+#endif
+
 extern std::string input;
 
 extern std::string output;

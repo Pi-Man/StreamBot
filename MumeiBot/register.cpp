@@ -12,11 +12,12 @@
 
 #ifdef _DEBUG
 #define AUTH_URL "https://discord.com/oauth2/authorize?client_id=1336495404308762685&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A65000%2Foauth%2Fdiscord%2Fcallback&scope=identify+guilds+guilds.members.read"
+#define REDIRECT_URL "http://localhost:65000/oauth/discord/callback"
 #else
 #define AUTH_URL "https://discord.com/oauth2/authorize?client_id=1336495404308762685&response_type=code&redirect_uri=https%3A%2F%2F3.141592.dev%2Foauth%2Fdiscord%2Fcallback&scope=identify+guilds+guilds.members.read+guilds.channels.read"
+#define REDIRECT_URL "https://3.141592.dev/oauth/discord/callback"
 #endif
 #define TOKEN_URL "https://discord.com/api/oauth2/token"
-#define REDIRECT_URL "https://3.141592.dev/oauth/discord/callback"
 #define CLIENT_ID "1336495404308762685"
 #define CLIENT_SECRET load_file("secret.txt")
 
@@ -24,6 +25,18 @@ static UUIDv4::UUIDGenerator<std::mt19937_64> uuid_generator;
 static std::mutex usermap_mutex;
 static std::unordered_map<std::string, std::pair<std::string, std::string>> usermap;
 static std::unordered_map<std::string, std::string> r_usermap;
+
+int login_callback(struct mg_connection * conn, void * cbdata) {
+	HTTPHeaders response_headers;
+	response_headers["Content-Type"] = "text/html; charset=utf-8";
+	response_headers["Connection"] = "close";
+	mg_printf(conn,
+		"HTTP/1.1 200 OK\r\n%s", std::string(response_headers).c_str());
+	mg_printf(conn, load_file(WEB_ROOT "login/index.html").c_str(), AUTH_URL);
+	//mg_printf(conn, "<!DOCTYPE html><title>Register New Link</title><html><body>");
+	//mg_printf(conn, "<p>Welcome %s!</p>", name.c_str());
+	return 1;
+}
 
 int logout_callback(struct mg_connection * conn, void * cbdata) {
 
@@ -132,7 +145,7 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 			return 1;
 		}
 	}
-	mg_send_http_redirect(conn, "/login/", 303);
+	mg_send_http_redirect(conn, "/register/login/", 303);
 	return 1;
 }
 
@@ -196,7 +209,11 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 				"Content-Length: 0\r\n"
 				"Content-Type: text/html\r\n"
 				"Connection: close\r\n"
-				"Set-Cookie: JWT=%s; Domain=3.141592.dev; Path=/register/; SameSite=Lax; Max-Age=%llu; Secure; HttpOnly\r\n"
+#ifdef _DEBUG
+				"Set-Cookie: JWT=%s; Path=/register/; SameSite=Lax; Max-Age=%llu; HttpOnly\r\n"
+#else
+				"Set-Cookie: JWT=%s; Path=/register/; SameSite=Lax; Max-Age=%llu; Secure; HttpOnly\r\n"
+#endif
 				"\r\n"
 				,
 				token.c_str(),
