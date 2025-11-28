@@ -107,7 +107,7 @@ static std::string get_channels_form(int64_t guild_id, const std::string & bot_t
 
 	html << "<form>";
 	html << "<lable for='channel'>Channel: </lable>";
-	html << "<select name='guild' id='guild'>";
+	html << "<select name='channel' id='channel'>";
 	for (const Channel & channel : channels) {
 		if (channel.type == Channel::GUILD_TEXT || channel.type == Channel::GUILD_ANNOUNCEMENT)
 			html << "<option value='" << channel.id << "'>" << channel.name << "</option>";
