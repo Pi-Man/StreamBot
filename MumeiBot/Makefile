@@ -1,7 +1,7 @@
 
 INCLD:=-I./jwt/include -I./uuidv4/include
 
-StreamBot: civetweb.o html.o util.o register.o htmlform.o httpheaders.o guild.o main.o
+StreamBot: civetweb.o html.o util.o register.o htmlform.o httpheaders.o guild.o channel.o main.o
 	g++ -g $^ $(args) $(INCLD) -lcurl -lssl -lcrypto -o $@
 
 %.o: %.c
@@ -14,4 +14,4 @@ bin:
 	mkdir bin
 
 clean:
-	rm civetweb.o html.o util.o register.o htmlform.o httpheaders.o guild.o main.o
+	rm civetweb.o html.o util.o register.o htmlform.o httpheaders.o guild.o channel.o main.o

@@ -33,6 +33,7 @@ int main(void) {
 
 	struct mg_context * ctx = mg_start(&callbacks, NULL, options);
 
+	mg_set_request_handler(ctx, "/login", redirect_to, (void*) "/register/login/");
 	mg_set_request_handler(ctx, "/register/login/$", login_callback, NULL);
 	mg_set_request_handler(ctx, "/register/logout/$", logout_callback, NULL);
 	mg_set_request_handler(ctx, "/oauth/discord/callback", oauth_callback, NULL);

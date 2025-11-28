@@ -8,6 +8,7 @@
 
 #include "civetweb.h"
 #include "guild.h"
+#include "channel.h"
 
 #ifdef _WIN32
 //#include <Windows.h>
@@ -57,6 +58,8 @@ void subscribe_RSS(const std::string & url, long long * lease);
 int confirm_subscription(struct mg_connection * conn, const struct mg_request_info * query);
 
 std::vector<Guild> get_guilds(const std::string & auth_token);
+
+std::vector<Channel> get_guild_channels(const int64_t guild_id, const std::string & auth_token);
 
 //bool is_new_entry(const char * entry_xml);
 

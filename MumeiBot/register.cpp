@@ -14,7 +14,7 @@
 #define AUTH_URL "https://discord.com/oauth2/authorize?client_id=1336495404308762685&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A65000%2Foauth%2Fdiscord%2Fcallback&scope=identify+guilds+guilds.members.read"
 #define REDIRECT_URL "http://localhost:65000/oauth/discord/callback"
 #else
-#define AUTH_URL "https://discord.com/oauth2/authorize?client_id=1336495404308762685&response_type=code&redirect_uri=https%3A%2F%2F3.141592.dev%2Foauth%2Fdiscord%2Fcallback&scope=identify+guilds+guilds.members.read+guilds.channels.read"
+#define AUTH_URL "https://discord.com/oauth2/authorize?client_id=1336495404308762685&response_type=code&redirect_uri=https%3A%2F%2F3.141592.dev%2Foauth%2Fdiscord%2Fcallback&scope=identify+guilds+guilds.members.read"
 #define REDIRECT_URL "https://3.141592.dev/oauth/discord/callback"
 #endif
 #define TOKEN_URL "https://discord.com/api/oauth2/token"
@@ -33,8 +33,6 @@ int login_callback(struct mg_connection * conn, void * cbdata) {
 	mg_printf(conn,
 		"HTTP/1.1 200 OK\r\n%s", std::string(response_headers).c_str());
 	mg_printf(conn, load_file(WEB_ROOT "login/index.html").c_str(), AUTH_URL);
-	//mg_printf(conn, "<!DOCTYPE html><title>Register New Link</title><html><body>");
-	//mg_printf(conn, "<p>Welcome %s!</p>", name.c_str());
 	return 1;
 }
 
@@ -83,10 +81,51 @@ int logout_callback(struct mg_connection * conn, void * cbdata) {
 	return 1;
 }
 
+static std::string get_guild_form(const std::string & auth_token) {
+	std::stringstream html;
+
+	std::vector<Guild> guilds = get_guilds(auth_token);
+
+	html << "<form>";
+	html << "<lable for='guild'>Guild: </lable>";
+	html << "<select name='guild' id='guild'>";
+	for (const Guild & guild : guilds) {
+		if (guild.permissions & ((1 << 5)))
+			html << "<option value='" << guild.id << "'>" << guild.name << "</option>";
+	}
+	html << "</select>";
+	html << "<input type='submit' value='Next'>";
+	html << "</form>";
+
+	return html.str();
+}
+
+static std::string get_channels_form(int64_t guild_id, const std::string & bot_token) {
+	std::stringstream html;
+
+	std::vector<Channel> channels = get_guild_channels(guild_id, bot_token);
+
+	html << "<form>";
+	html << "<lable for='channel'>Channel: </lable>";
+	html << "<select name='guild' id='guild'>";
+	for (const Channel & channel : channels) {
+		if (channel.type == Channel::GUILD_TEXT || channel.type == Channel::GUILD_ANNOUNCEMENT)
+			html << "<option value='" << channel.id << "'>" << channel.name << "</option>";
+	}
+	html << "</select>";
+	html << "<lable for='yt'>Youtube Channel Link: </lable>";
+	html << "<input id='yt' name='yt' type='text'>";
+	html << "<input type='submit' value='Subscribe'>";
+	html << "</form>";
+
+	return html.str();
+}
+
 int register_callback(struct mg_connection * conn, void * cbdata) {
 
 	const struct mg_request_info * info = mg_get_request_info(conn);
 	HTTPHeaders request_headers(info->http_headers, info->num_headers);
+	HTMLForm query = info->query_string;
 
 	if (request_headers.cookies.has("JWT")) {
 		jwt::decoded_jwt jwt = jwt::decode(request_headers.cookies["JWT"]);
@@ -125,8 +164,6 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 				name = "nobody";
 			}
 
-			std::vector<Guild> guilds = get_guilds(auth_token);
-
 			HTTPHeaders response_headers;
 			response_headers["Content-Type"] = "text/html; charset=utf-8";
 			response_headers["Connection"] = "close";
@@ -134,14 +171,18 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 				"HTTP/1.1 200 OK\r\n%s", std::string(response_headers).c_str());
 			mg_printf(conn, "<!DOCTYPE html><title>Register New Link</title><html><body>");
 			mg_printf(conn, "<p>Welcome %s!</p>", name.c_str());
-			mg_printf(conn, "<select name=\"guild\" id = \"guild\">");
-			for (const Guild & guild : guilds) {
-				if (guild.permissions & ((1 << 5)))
-					mg_printf(conn, "<option value=\"%s\">%s</option>", guild.name.c_str(), guild.name.c_str());
+
+			if (query.has("guild")) {
+				int64_t guild_id = atoll(query["guild"].c_str());
+				mg_printf(conn, "%s", get_channels_form(guild_id, load_file("token.txt")).c_str());
+				mg_printf(conn, "<p>%s</p>", input.c_str());
 			}
-			mg_printf(conn, "</select>");
-			mg_printf(conn, "<a href=\"/register/logout/\">Logout</a>");
-			mg_printf(conn, "</body></html>\n");
+			else {
+				mg_printf(conn, "%s", get_guild_form(auth_token).c_str());
+			}
+
+			mg_printf(conn, "<a href='/register/logout/'>Logout</a>");
+			mg_printf(conn, "</body></html>");
 			return 1;
 		}
 	}

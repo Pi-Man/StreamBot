@@ -6,6 +6,7 @@
 #include <mutex>
 #include <atomic>
 #include <algorithm>
+#include <sstream>
 
 #define PICOJSON_USE_INT64
 #include <picojson/picojson.h>
@@ -296,6 +297,35 @@ std::vector<Guild> get_guilds(const std::string &auth_token) {
 	std::sort(guilds.begin(), guilds.end(), [](const Guild & a, const Guild & b){ return a.name < b.name; });
 
 	return guilds;
+}
+
+std::vector<Channel> get_guild_channels(const int64_t guild_id, const std::string & bot_token) {
+
+    std::vector<Channel> channels;
+
+	std::string auth_header = "Authorization: Bot " + bot_token;
+	curl_slist * header = curl_slist_append(NULL, auth_header.c_str());
+
+	std::stringstream url;
+	url << "https://discord.com/api/v9/guilds/";
+	url << guild_id;
+	url << "/channels";
+
+	GET(url.str().c_str(), header, NULL, NULL);
+
+	picojson::value json_doc;
+	picojson::parse(json_doc, input);
+
+	if (json_doc.is<picojson::array>()) {
+		const picojson::array & json_arr = json_doc.get<picojson::array>();
+		for (const picojson::value & channel_val : json_arr) {
+			channels.push_back(channel_val);
+		}
+	}
+
+	std::sort(channels.begin(), channels.end(), [](const Channel & a, const Channel & b){ return a.name < b.name; });
+
+	return channels;
 }
 
 // bool is_new_entry(const char * entry_xml) {
