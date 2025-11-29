@@ -2,6 +2,7 @@
 
 #include <string>
 #include <mutex>
+#include <format>
 
 #include <jwt-cpp/jwt.h>
 #include <uuid_v4.h>
@@ -10,21 +11,87 @@
 #include "htmlform.h"
 #include "httpheaders.h"
 
-#ifdef _DEBUG
-#define AUTH_URL "https://discord.com/oauth2/authorize?client_id=1336495404308762685&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A65000%2Foauth%2Fdiscord%2Fcallback&scope=identify+guilds+guilds.members.read"
-#define REDIRECT_URL "http://localhost:65000/oauth/discord/callback"
-#else
-#define AUTH_URL "https://discord.com/oauth2/authorize?client_id=1336495404308762685&response_type=code&redirect_uri=https%3A%2F%2F3.141592.dev%2Foauth%2Fdiscord%2Fcallback&scope=identify+guilds+guilds.members.read"
-#define REDIRECT_URL "https://3.141592.dev/oauth/discord/callback"
-#endif
-#define TOKEN_URL "https://discord.com/api/oauth2/token"
-#define CLIENT_ID "1336495404308762685"
-#define CLIENT_SECRET load_file("secret.txt")
-
 static UUIDv4::UUIDGenerator<std::mt19937_64> uuid_generator;
 static std::mutex usermap_mutex;
 static std::unordered_map<std::string, std::pair<std::string, std::string>> usermap;
 static std::unordered_map<std::string, std::string> r_usermap;
+
+// /users/@me/guilds/{guild.id}
+
+int remove_bot_callback(struct mg_connection * conn, void * cbdata) {
+
+	std::string data;
+
+	int count;
+	do {
+		char buffer[256];
+		count = mg_read(conn, buffer, 255);
+		if (count > 0) {
+			buffer[count] = 0;
+			data += buffer;
+		}
+	} while(count > 0);
+
+	HTMLForm data_form = data;
+
+	if (data_form.has("guild_id")) {
+
+		curl_slist * header = curl_slist_append(NULL, ("Authorization: Bot " + BOT_TOKEN).c_str());
+		DELETE(DISCORD_API "/users/@me/guilds/" + data_form["guild_id"], header, NULL, NULL);
+		curl_slist_free_all(header);
+
+		HTTPHeaders response_headers;
+		response_headers["Location"] = "/register/";
+		response_headers["Connection"] = "close";
+		mg_printf(conn,
+			"HTTP/1.1 303 See Other\r\n%s", std::string(response_headers).c_str());
+		return 1;
+	}
+	mg_printf(conn, "HTTP/1.1 422 Unprocessable Content\r\n");
+	return 1;
+}
+
+int add_bot_callback(struct mg_connection * conn, void * cbdata) {
+
+	std::string data;
+
+	int count;
+	do {
+		char buffer[256];
+		count = mg_read(conn, buffer, 255);
+		if (count > 0) {
+			buffer[count] = 0;
+			data += buffer;
+		}
+	} while(count > 0);
+
+	HTMLForm data_form = data;
+
+	if (data_form.has("guild_id")) {
+
+		HTMLForm auth_form;
+		auth_form["client_id"] = CLIENT_ID;
+		auth_form["scope"] = "bot";
+		auth_form["permissions"] = "19456";
+		auth_form["response_type"] = "code";
+		auth_form["redirect_uri"] = REDIRECT_URL;
+		auth_form["integration_type"] = "0";
+		auth_form["guild_id"] = data_form["guild_id"];
+		auth_form["disable_guild_select"] = "true";
+
+		std::string url = DISCORD_AUTH "?";
+		url += auth_form;
+
+		HTTPHeaders response_headers;
+		response_headers["Location"] = url;
+		response_headers["Connection"] = "close";
+
+		mg_printf(conn, "HTTP/1.1 303 See Other\r\n%s", std::string(response_headers).c_str());
+		return 1;
+	}
+	mg_printf(conn, "HTTP/1.1 422 Unprocessable Content\r\n");
+	return 1;
+}
 
 int login_callback(struct mg_connection * conn, void * cbdata) {
 	HTTPHeaders response_headers;
@@ -32,7 +99,7 @@ int login_callback(struct mg_connection * conn, void * cbdata) {
 	response_headers["Connection"] = "close";
 	mg_printf(conn,
 		"HTTP/1.1 200 OK\r\n%s", std::string(response_headers).c_str());
-	mg_printf(conn, load_file(WEB_ROOT "login/index.html").c_str(), AUTH_URL);
+	mg_printf(conn, load_file(WEB_ROOT "register/login/index.html").c_str(), AUTH_URL);
 	return 1;
 }
 
@@ -121,14 +188,9 @@ static std::string get_channels_form(int64_t guild_id, const std::string & bot_t
 	return html.str();
 }
 
-int register_callback(struct mg_connection * conn, void * cbdata) {
-
-	const struct mg_request_info * info = mg_get_request_info(conn);
-	HTTPHeaders request_headers(info->http_headers, info->num_headers);
-	HTMLForm query = info->query_string;
-
-	if (request_headers.cookies.has("JWT")) {
-		jwt::decoded_jwt jwt = jwt::decode(request_headers.cookies["JWT"]);
+static std::string authenticate(const HTTPCookies & cookies) {
+	if (cookies.has("JWT")) {
+		jwt::decoded_jwt jwt = jwt::decode(cookies["JWT"]);
 		jwt::claim user = jwt.get_payload_claim("User");
 		jwt::verifier verifier = jwt::verify()
 			.with_type("JWT")
@@ -140,51 +202,61 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 		usermap_mutex.lock();
 		std::string auth_token = usermap.find(user.as_string()) == usermap.end() ? "" : usermap[user.as_string()].first;
 		usermap_mutex.unlock();
-		if (!error && !auth_token.empty()) {
+		if (!error) return auth_token;
+	}
+	return "";
+}
 
-			std::string auth_header = "Authorization: Bearer " + auth_token;
+int register_callback(struct mg_connection * conn, void * cbdata) {
 
-			curl_slist * header = curl_slist_append(NULL, auth_header.c_str());
+	const struct mg_request_info * info = mg_get_request_info(conn);
+	HTTPHeaders request_headers(info->http_headers, info->num_headers);
+	HTMLForm query = info->query_string;
 
-			std::string identify_url = "https://discord.com/api/v9/users/@me";
+	std::string auth_token = authenticate(request_headers.cookies);
 
-			GET(identify_url, header, NULL, NULL);
+	if (!auth_token.empty()) {
 
-			picojson::value json;
-			picojson::parse(json, input);
-			std::string name;
+		std::string auth_header = "Authorization: Bearer " + auth_token;
 
-			if (json.get("global_name").is<std::string>()) {
-				name = json.get("global_name").to_str();
-			}
-			else if (json.get("username").is<std::string>()) {
-				name = json.get("username").to_str();
-			}
-			else {
-				name = "nobody";
-			}
+		curl_slist * header = curl_slist_append(NULL, auth_header.c_str());
 
-			HTTPHeaders response_headers;
-			response_headers["Content-Type"] = "text/html; charset=utf-8";
-			response_headers["Connection"] = "close";
-			mg_printf(conn,
-				"HTTP/1.1 200 OK\r\n%s", std::string(response_headers).c_str());
-			mg_printf(conn, "<!DOCTYPE html><title>Register New Link</title><html><body>");
-			mg_printf(conn, "<p>Welcome %s!</p>", name.c_str());
+		std::string identify_url = "https://discord.com/api/v9/users/@me";
 
-			if (query.has("guild")) {
-				int64_t guild_id = atoll(query["guild"].c_str());
-				mg_printf(conn, "%s", get_channels_form(guild_id, load_file("token.txt")).c_str());
-				mg_printf(conn, "<p>%s</p>", input.c_str());
-			}
-			else {
-				mg_printf(conn, "%s", get_guild_form(auth_token).c_str());
-			}
+		GET(identify_url, header, NULL, NULL);
 
-			mg_printf(conn, "<a href='/register/logout/'>Logout</a>");
-			mg_printf(conn, "</body></html>");
-			return 1;
+		picojson::value json;
+		picojson::parse(json, input);
+		std::string name;
+
+		if (json.get("global_name").is<std::string>()) {
+			name = json.get("global_name").to_str();
 		}
+		else if (json.get("username").is<std::string>()) {
+			name = json.get("username").to_str();
+		}
+		else {
+			name = "nobody";
+		}
+
+		HTTPHeaders response_headers;
+		response_headers["Content-Type"] = "text/html; charset=utf-8";
+		response_headers["Connection"] = "close";
+		std::string table_rows;
+		const std::vector<Guild> guilds = get_guilds(auth_token);
+		for (const Guild & guild : guilds) {
+			if (guild.permissions & (1 << 5)) {
+				bool in_guild = bot_in_guild(guild.id);
+				table_rows += format(load_file(WEB_ROOT "/register/guild_frag.html"), { std::to_string(guild.id), guild.name, in_guild ? "rem-bot" : "add-bot", in_guild ? "☑" : "☒" });
+			}
+		}
+		mg_printf(conn,
+			"HTTP/1.1 200 OK\r\n%s", std::string(response_headers).c_str());
+		mg_printf(conn, load_file(WEB_ROOT "/register/index.html").c_str(),
+			name.c_str(),
+			table_rows.c_str()
+		);
+		return 1;
 	}
 	mg_send_http_redirect(conn, "/register/login/", 303);
 	return 1;
@@ -197,6 +269,11 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 	HTMLForm query = info->query_string;
 
 	if (query.has("code")) {
+		if (query.has("guild_id")) {
+			mg_send_http_redirect(conn, "/register/", 303);
+			return 1;
+		}
+
 		std::string code = query["code"];
 
 		HTMLForm data;

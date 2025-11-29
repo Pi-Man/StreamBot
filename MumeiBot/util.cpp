@@ -45,13 +45,19 @@ static long long sub_lease;
 
 std::string load_file(const std::string & file_name) {
 
+	static std::mutex mutex;
+
+	std::lock_guard lock(mutex);
+
 	std::string contents;
 
 	std::ifstream file(file_name);
 
-	while (!file.eof()) {
-		int c = file.get();
-		if (c != EOF) contents.push_back(c);
+	if (file.good()) {
+		while (!file.eof()) {
+			int c = file.get();
+			if (c != EOF) contents.push_back(c);
+		}
 	}
 
 	return contents;
@@ -102,7 +108,11 @@ CURLcode GET(const std::string & url, struct curl_slist * header, const char * u
 
 	CLEANUP;
 
-	return CURLE_OK;
+	long http_code;
+
+	THROW_CURL(curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &http_code), {});
+
+	return (CURLcode) http_code;
 
 	#undef CLEANUP
 
@@ -128,6 +138,40 @@ CURLcode POST(const std::string & url, struct curl_slist * header, const char * 
 	THROW_CURL(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data), CLEANUP);
 	THROW_CURL(curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, output.length()), CLEANUP);
 	THROW_CURL(curl_easy_setopt(curl, CURLOPT_POST, 1), CLEANUP);
+	THROW_CURL(curl_easy_setopt(curl, CURLOPT_URL, url.c_str()), CLEANUP);
+
+	THROW_CURL(curl_easy_perform(curl), CLEANUP);
+
+	CLEANUP;
+
+	return CURLE_OK;
+
+	#undef CLEANUP
+
+}
+
+CURLcode DELETE(const std::string & url, struct curl_slist * header, const char * username, const char * password) {
+
+	input.clear();
+
+	curl_easy_reset(curl);
+
+	bool flag = !header && !output.empty();
+
+	if (!output.empty()) {
+		std::string content_header = "Content-Type: " + output_type;
+		header = curl_slist_append(header, content_header.c_str());
+	}
+
+	#define CLEANUP { if (flag) curl_slist_free_all(header); }
+	if (username) THROW_CURL(curl_easy_setopt(curl, CURLOPT_USERNAME, username), CLEANUP);
+	if (username && password) THROW_CURL(curl_easy_setopt(curl, CURLOPT_PASSWORD, password), CLEANUP);
+	THROW_CURL(curl_easy_setopt(curl, CURLOPT_HTTPHEADER, header), CLEANUP);
+	THROW_CURL(curl_easy_setopt(curl, CURLOPT_CAINFO, "cacert.pem"), CLEANUP);
+	if (!output.empty()) THROW_CURL(curl_easy_setopt(curl, CURLOPT_READFUNCTION, read_data), CLEANUP);
+	THROW_CURL(curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data), CLEANUP);
+	if (!output.empty()) THROW_CURL(curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, output.length()), CLEANUP);
+	THROW_CURL(curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "DELETE"), CLEANUP);
 	THROW_CURL(curl_easy_setopt(curl, CURLOPT_URL, url.c_str()), CLEANUP);
 
 	THROW_CURL(curl_easy_perform(curl), CLEANUP);
@@ -326,6 +370,56 @@ std::vector<Channel> get_guild_channels(const int64_t guild_id, const std::strin
 	std::sort(channels.begin(), channels.end(), [](const Channel & a, const Channel & b){ return a.name < b.name; });
 
 	return channels;
+}
+
+bool bot_in_guild(const int64_t guild_id) {
+	std::string auth_header = "Authorization: Bot " + BOT_TOKEN;
+	curl_slist * header = curl_slist_append(NULL, auth_header.c_str());
+
+	std::string url = (std::stringstream() << DISCORD_API "guilds/" << guild_id << "/members/" CLIENT_ID).str();
+	CURLcode code = GET(url, header, NULL, NULL);
+	curl_slist_free_all(header);
+
+    return code >= 200 && code < 300;
+}
+
+std::string format(const std::string & format, const std::initializer_list<const std::string> && args) {
+    std::string out;
+	out.reserve(format.length());
+
+	ptrdiff_t argc = args.end() - args.begin();
+
+	for (int i = 0; i < format.length(); i++) {
+		unsigned char c = format[i];
+		if (c == '%') {
+			i++;
+			c = format[i];
+			ptrdiff_t index = 0;
+			if (c == '%') {
+				out.push_back(c);
+			}
+			else if (isdigit(c)) {
+				index = c - '0';
+				i++;
+				while (isdigit(c = format[i])) {
+					index *= 10;
+					index += c - '0';
+					i++;
+				}
+				i--;
+				if (index < argc) {
+					const std::string & str = args.begin()[index];
+					out.reserve(out.capacity() + str.length());
+					out += str;
+				}
+			}
+		}
+		else {
+			out.push_back(c);
+		}
+	}
+
+	return out;
 }
 
 // bool is_new_entry(const char * entry_xml) {

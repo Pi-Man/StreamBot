@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<HTML>
+<HEAD>
+    <TITLE>Server Dashboard</TITLE>
+    <meta charset="utf-8" />
+    <!-- <link rel="stylesheet" href="styling.css" /> -->
+    <!-- <script defer src="script.js"></script> -->
+</HEAD>
+<BODY>
+    <h1>Welcome %s!</h1>
+    <table>
+        <tr>
+            <th>Server name</th>
+            <th>Bot Added (click to add/remove)</th>
+        </tr>
+        %s
+    </table>
+    <form action='/register/logout/' method='post'>
+        <input type="submit" value="Logout">
+    </form>
+</BODY>
+</HTML>
