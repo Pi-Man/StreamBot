@@ -59,7 +59,7 @@ std::string load_file(const std::string & file_name) {
 			if (c != EOF) contents.push_back(c);
 		}
 	}
-
+	contents.erase(contents.find_last_not_of("\n\r") + 1);
 	return contents;
 }
 
