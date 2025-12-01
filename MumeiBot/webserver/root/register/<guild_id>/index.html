@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<HTML>
+<HEAD>
+    <TITLE>%s Registrations</TITLE>
+    <meta charset="utf-8" />
+    <!-- <link rel="stylesheet" href="styling.css" /> -->
+    <!-- <script defer src="script.js"></script> -->
+</HEAD>
+<BODY>
+    <h1>%s</h1>
+    <form id="new-entry" action="./add-entry"></form>
+    <table>
+        <tr>
+            <th></th>
+            <th>Server Channel</th>
+            <th>Youtube Channel</th>
+        </tr>
+        %s
+        <tr>
+            <td>
+                <button form="new-entry" type="submit">+</button>
+            </td>
+            <td>
+                <select form="new-entry" name="guild_channel_id">
+                    %s
+                    <!-- <option value="%s">%s</option> -->
+                </select>
+            </td>
+            <td>
+                <input form="new-entry" name="yt_channel" type="url">
+            </td>
+        </tr>
+    </table>
+    <form action='/register/' method='get'>
+        <input type="submit" value="Back">
+    </form>
+    <form action='/register/logout/' method='post'>
+        <input type="submit" value="Logout">
+    </form>
+</BODY>
+</HTML>
