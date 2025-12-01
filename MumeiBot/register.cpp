@@ -19,7 +19,7 @@ static std::unordered_map<std::string, std::string> r_usermap;
 
 #define CONN_STR "host=localhost port=65001 user=postgres password=postgres"
 
-int remove_bot_callback(struct mg_connection * conn, void * cbdata) {
+static std::string get_body(struct mg_connection * conn) {
 
 	std::string data;
 
@@ -33,7 +33,12 @@ int remove_bot_callback(struct mg_connection * conn, void * cbdata) {
 		}
 	} while(count > 0);
 
-	HTMLForm data_form = data;
+	return data;
+}
+
+int remove_bot_callback(struct mg_connection * conn, void * cbdata) {
+
+	HTMLForm data_form = get_body(conn);
 
 	if (data_form.has("guild_id")) {
 
@@ -208,6 +213,76 @@ static std::string authenticate(const HTTPCookies & cookies) {
 	return "";
 }
 
+int register_guild_add_entry_callback(struct mg_connection * conn, void * cbdata) {
+
+	const struct mg_request_info * info = mg_get_request_info(conn);
+
+	std::string path = info->local_uri;
+	std::string guild = path.substr(std::strlen("/register/"));
+	guild = guild.substr(0, guild.find('/'));
+
+	if (std::all_of(guild.begin(), guild.end(), [](const unsigned char & c) {return isdigit(c);})) {
+
+		HTTPHeaders request_headers(info->http_headers, info->num_headers);
+
+		std::string auth_token = authenticate(request_headers.cookies);
+
+		if (!auth_token.empty()) {
+
+			int64_t guild_id = std::stoll(guild);
+
+			HTMLForm query = get_body(conn);
+
+			pqxx::connection pgconn(CONN_STR);
+			pqxx::work work(pgconn);
+			work.exec("CREATE TABLE IF NOT EXISTS subscription(id SERIAL PRIMARY KEY, guild BIGINT, text_channel BIGINT, yt_channel VARCHAR(252))");
+			work.exec_params("INSERT INTO subscription(guild, text_channel, yt_channel) VALUES ($1, $2, $3)", guild, query["guild_channel_id"], query["yt_channel"]);
+			work.commit();
+			mg_send_http_redirect(conn, ".", 303);
+			return 1;
+		}
+
+		mg_send_http_redirect(conn, "/register/login/", 303);
+		return 1;
+	}
+	return 0;
+}
+
+int register_guild_remove_entry_callback(struct mg_connection * conn, void * cbdata) {
+
+	const struct mg_request_info * info = mg_get_request_info(conn);
+
+	std::string path = info->local_uri;
+	std::string guild = path.substr(std::strlen("/register/"));
+	guild = guild.substr(0, guild.find('/'));
+
+	if (std::all_of(guild.begin(), guild.end(), [](const unsigned char & c) {return isdigit(c);})) {
+
+		HTTPHeaders request_headers(info->http_headers, info->num_headers);
+
+		std::string auth_token = authenticate(request_headers.cookies);
+
+		if (!auth_token.empty()) {
+
+			int64_t guild_id = std::stoll(guild);
+
+			HTMLForm query = get_body(conn);
+
+			pqxx::connection pgconn(CONN_STR);
+			pqxx::work work(pgconn);
+			work.exec("CREATE TABLE IF NOT EXISTS subscription(id SERIAL PRIMARY KEY, guild BIGINT, text_channel BIGINT, yt_channel VARCHAR(252))");
+			work.exec_params("DELETE FROM subscription WHERE guild=$1 AND text_channel=$2", guild, query["channel"]);
+			work.commit();
+			mg_send_http_redirect(conn, ".", 303);
+			return 1;
+		}
+
+		mg_send_http_redirect(conn, "/register/login/", 303);
+		return 1;
+	}
+	return 0;
+}
+
 int register_guild_callback(struct mg_connection * conn, void * cbdata) {
 
 	const struct mg_request_info * info = mg_get_request_info(conn);
@@ -216,15 +291,16 @@ int register_guild_callback(struct mg_connection * conn, void * cbdata) {
 	std::string guild = path.substr(std::strlen("/register/"));
 
 	if (std::all_of(guild.begin(), guild.end(), [](const unsigned char & c) {return isdigit(c);})) {
-		int64_t guild_id = std::stoll(guild);
 
 		HTTPHeaders request_headers(info->http_headers, info->num_headers);
 
 		std::string auth_token = authenticate(request_headers.cookies);
 
-		std::string entries;
-
 		if (!auth_token.empty()) {
+
+			int64_t guild_id = std::stoll(guild);
+
+			std::string entries;
 			
 			std::vector<Channel> channels = get_guild_channels(guild_id, BOT_TOKEN);
 			
@@ -232,6 +308,16 @@ int register_guild_callback(struct mg_connection * conn, void * cbdata) {
 			pqxx::work work(pgconn);
 			work.exec("CREATE TABLE IF NOT EXISTS subscription(id SERIAL PRIMARY KEY, guild BIGINT, text_channel BIGINT, yt_channel VARCHAR(252))");
 			pqxx::result table = work.exec_params("SELECT text_channel, yt_channel FROM subscription WHERE guild=$1", guild);
+
+			std::vector<Guild> guilds = get_guilds(auth_token);
+
+			auto it = std::find_if(guilds.begin(), guilds.end(), [guild_id](const Guild & guild){ return guild.id == guild_id; });
+
+			Guild guild;
+
+			if (it != guilds.end()) {
+				guild = *it;
+			}
 			
 			for (const pqxx::row & row : table) {
 				int64_t text_channel = row[0].as<int64_t>();
@@ -241,20 +327,11 @@ int register_guild_callback(struct mg_connection * conn, void * cbdata) {
 					pqxx::work(pgconn).exec_params("DELETE * FROM subscription WHERE text_channel=$1", std::to_string(text_channel));
 				}
 				else {
-					entries += format(load_file(WEB_ROOT "register/<guild_id>/channel_frag.html"), { std::to_string(text_channel), it->name, yt_channel });
+					entries += format(load_file(WEB_ROOT "register/<guild_id>/channel_frag.html"), { std::to_string(guild.id), std::to_string(text_channel), it->name, yt_channel });
 				}
 			}
 
 			work.commit();
-
-			curl_slist * headers = curl_slist_append(NULL, ("Authorization: Bearer " + auth_token).c_str());
-			GET(DISCORD_API "guilds/" + guild, headers, NULL, NULL);
-			curl_slist_free_all(headers);
-
-			picojson::value json;
-			picojson::parse(json, input);
-
-			Guild guild(json);
 
 			std::string channels_options;
 
@@ -269,12 +346,15 @@ int register_guild_callback(struct mg_connection * conn, void * cbdata) {
 			mg_printf(conn, load_file(WEB_ROOT "register/<guild_id>/index.html").c_str(),
 				guild.name.c_str(),
 				guild.name.c_str(),
+				std::to_string(guild.id).c_str(),
 				entries.c_str(),
 				channels_options.c_str()
 			);
 
 			return 1;
 		}
+		mg_send_http_redirect(conn, "/register/login/", 303);
+		return 1;
 	}
 	return 0;
 }

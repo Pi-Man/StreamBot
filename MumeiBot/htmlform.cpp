@@ -23,6 +23,10 @@ HTMLForm::HTMLForm(const std::string &form) {
 	size_t j = form.find('=', index);
 	std::string key = form.substr(index, j - index);
 	std::string val = form.substr(j + 1);
+	mg_url_decode(key.c_str(), key.length(), buffer, 1024, true);
+	key = buffer;
+	mg_url_decode(val.c_str(), val.length(), buffer, 1024, true);
+	val = buffer;
 	map[key] = val;
 }
 
