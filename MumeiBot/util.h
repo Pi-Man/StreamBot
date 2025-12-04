@@ -41,6 +41,8 @@
 #define CLIENT_SECRET load_file("secret.txt")
 #define BOT_TOKEN load_file("token.txt")
 
+#define CONN_STR "host=localhost port=65001 user=postgres password=postgres"
+
 extern std::string input;
 
 extern std::string output;

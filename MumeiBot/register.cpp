@@ -17,8 +17,6 @@ static std::mutex usermap_mutex;
 static std::unordered_map<std::string, std::pair<std::string, std::string>> usermap;
 static std::unordered_map<std::string, std::string> r_usermap;
 
-#define CONN_STR "host=localhost port=65001 user=postgres password=postgres"
-
 static std::string get_body(struct mg_connection * conn) {
 
 	std::string data;
@@ -34,6 +32,63 @@ static std::string get_body(struct mg_connection * conn) {
 	} while(count > 0);
 
 	return data;
+}
+
+static std::string authenticate(const HTTPCookies & cookies) {
+	if (cookies.has("JWT")) {
+
+		jwt::decoded_jwt jwt = jwt::decode(cookies["JWT"]);
+		jwt::claim user = jwt.get_payload_claim("User");
+		jwt::verifier verifier = jwt::verify()
+			.with_type("JWT")
+			.with_issuer("StreamBot")
+			.with_claim("User", user)
+			.allow_algorithm(jwt::algorithm::hs256("streambot"));
+		std::error_code error;
+		verifier.verify(jwt, error);
+
+		if (error) return "";
+
+		pqxx::connection pqconn(CONN_STR);
+		pqxx::read_transaction work(pqconn);
+		pqxx::result table = work.exec_params("SELECT access_token FROM session WHERE id=$1", user.as_string());
+		work.commit();
+		if (table.size() == 1) {
+			return table[0][0].as<std::string>();
+		}
+
+		return "";
+	}
+	return "";
+}
+
+static std::string remove_session(const HTTPCookies & cookies) {
+	if (cookies.has("JWT")) {
+
+		jwt::decoded_jwt jwt = jwt::decode(cookies["JWT"]);
+		jwt::claim user = jwt.get_payload_claim("User");
+		jwt::verifier verifier = jwt::verify()
+			.with_type("JWT")
+			.with_issuer("StreamBot")
+			.with_claim("User", user)
+			.allow_algorithm(jwt::algorithm::hs256("streambot"));
+		std::error_code error;
+		verifier.verify(jwt, error);
+
+		if (error) return "";
+
+		pqxx::connection pqconn(CONN_STR);
+		pqxx::work work(pqconn);
+		pqxx::result table = work.exec_params("SELECT access_token FROM session WHERE id=$1", user.as_string());
+		work.exec_params("DELETE FROM session WHERE id=$1", user.as_string());
+		work.commit();
+		if (table.size() == 1) {
+			return table[0][0].as<std::string>();
+		}
+
+		return "";
+	}
+	return "";
 }
 
 int remove_bot_callback(struct mg_connection * conn, void * cbdata) {
@@ -99,6 +154,17 @@ int add_bot_callback(struct mg_connection * conn, void * cbdata) {
 	return 1;
 }
 
+void revoke_token(const std::string & access_token) {
+		HTMLForm form;
+		form["token"] = access_token;
+		form["token_type_hint"] = "access_token";
+		form["client_id"] = CLIENT_ID;
+		form["client_secret"] = CLIENT_SECRET;
+		output = form;
+		output_type = "application/x-www-form-urlencoded";
+		POST(TOKEN_URL "/revoke", NULL, NULL, NULL);
+}
+
 int login_callback(struct mg_connection * conn, void * cbdata) {
 	HTTPHeaders response_headers;
 	response_headers["Content-Type"] = "text/html; charset=utf-8";
@@ -113,43 +179,17 @@ int logout_callback(struct mg_connection * conn, void * cbdata) {
 
 	const struct mg_request_info * info = mg_get_request_info(conn);
 	HTTPHeaders request_headers(info->http_headers, info->num_headers);
-	if (request_headers.cookies.has("JWT")) {
-		jwt::decoded_jwt jwt = jwt::decode(request_headers.cookies["JWT"]);
-		jwt::claim user = jwt.get_payload_claim("User");
-		jwt::verifier verifier = jwt::verify()
-			.with_type("JWT")
-			.with_issuer("StreamBot")
-			.with_claim("User", user)
-			.allow_algorithm(jwt::algorithm::hs256("streambot"));
-		std::error_code error;
-		verifier.verify(jwt, error);
-		usermap_mutex.lock();
-		std::string auth_token = usermap.find(user.as_string()) == usermap.end() ? "" : usermap[user.as_string()].first;
-		usermap_mutex.unlock();
-		if (!error && !auth_token.empty()) {
-			usermap.erase(user.as_string());
-			r_usermap.erase(auth_token);
-			HTMLForm form;
-			form["token"] = auth_token;
-			form["token_type_hint"] = "access_token";
-			form["client_id"] = CLIENT_ID;
-			form["client_secret"] = CLIENT_SECRET;
-			output = form;
-			output_type = "application/x-www-form-urlencoded";
-			POST(TOKEN_URL "/revoke", NULL, NULL, NULL);
-			puts(input.c_str());
-		}
+
+	std::string auth_token = remove_session(request_headers.cookies);
+	if (!auth_token.empty()) {
+		revoke_token(auth_token);
 	}
 
 	HTTPHeaders response_headers;
-	response_headers["Content-Type"] = "text/html; charset=utf-8";
-	response_headers["Clear-Site-Data: "] = "\"cookies\"";
+	response_headers["Location"] = "/register/login/";
+	response_headers["Clear-Site-Data"] = "\"cookies\"";
 	response_headers["Connection"] = "close";
-	mg_printf(conn,
-		"HTTP/1.1 200 OK\r\n%s", std::string(response_headers).c_str());
-	mg_printf(conn, "<!DOCTYPE html><title>Register New Link</title><html><body>");
-	mg_printf(conn, "<p>Goodbye!</p>");
-	mg_printf(conn, "</body></html>");
+	mg_printf(conn, "HTTP/1.1 303 See Other\r\n%s", std::string(response_headers).c_str());
 
 	return 1;
 }
@@ -192,25 +232,6 @@ static std::string get_channels_form(int64_t guild_id, const std::string & bot_t
 	html << "</form>";
 
 	return html.str();
-}
-
-static std::string authenticate(const HTTPCookies & cookies) {
-	if (cookies.has("JWT")) {
-		jwt::decoded_jwt jwt = jwt::decode(cookies["JWT"]);
-		jwt::claim user = jwt.get_payload_claim("User");
-		jwt::verifier verifier = jwt::verify()
-			.with_type("JWT")
-			.with_issuer("StreamBot")
-			.with_claim("User", user)
-			.allow_algorithm(jwt::algorithm::hs256("streambot"));
-		std::error_code error;
-		verifier.verify(jwt, error);
-		usermap_mutex.lock();
-		std::string auth_token = usermap.find(user.as_string()) == usermap.end() ? "" : usermap[user.as_string()].first;
-		usermap_mutex.unlock();
-		if (!error) return auth_token;
-	}
-	return "";
 }
 
 int register_guild_add_entry_callback(struct mg_connection * conn, void * cbdata) {
@@ -421,10 +442,10 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 	HTMLForm query = info->query_string;
 
 	if (query.has("code")) {
-		if (query.has("guild_id")) {
-			mg_send_http_redirect(conn, "/register/", 303);
-			return 1;
-		}
+		// if (query.has("guild_id")) {
+		// 	mg_send_http_redirect(conn, "/register/", 303);
+		// 	return 1;
+		// }
 
 		std::string code = query["code"];
 
@@ -449,24 +470,28 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 			mg_printf(conn, "</body></html>\n");
 		}
 		else {
-			usermap_mutex.lock();
-			std::string uuid;
+			std::string uuid = uuid_generator.getUUID().str();
 			std::string access_token = json.get("access_token").to_str();
 			std::string refresh_token = json.get("refresh_token").to_str();
-
-			if (r_usermap.find(access_token) != r_usermap.end()) {
-				uuid = r_usermap[access_token];
-				printf("found exisiting user %s\n", uuid.c_str());
-			}
-			else {
-				uuid = uuid_generator.getUUID().str();
-				usermap[uuid] = { access_token, refresh_token };
-				r_usermap[access_token] = uuid.c_str();
+			pqxx::connection pqconn(CONN_STR);
+			pqxx::work work(pqconn);
+			std::string token_part = access_token.substr(0, access_token.find('.'));
+			pqxx::result table = work.exec("SELECT id FROM session WHERE access_token LIKE '" + pqconn.esc(std::string_view(token_part)) + "%';");
+			if (table.empty()) {
+				work.exec_params("INSERT INTO session(id, access_token, refresh_token) VALUES($1, $2, $3);", uuid, access_token, refresh_token);
 				printf("created new user %s\n", uuid.c_str());
 			}
-				
-			usermap_mutex.unlock();
-
+			else {
+				uuid = table[0][0].as<std::string>();
+				for (int i = 1; i < table.size(); i++) {
+					pqxx::result table2 = work.exec_params("DELETE FROM session WHERE id=$1 RETURNING access_token;", table[i][0].as<std::string>());
+					revoke_token(table[0][0].as<std::string>());
+				}
+				work.exec_params("UPDATE session SET access_token=$2, refresh_token=$3 WHERE id=$1;", uuid, access_token, refresh_token);
+				printf("found existing user %s\n", uuid.c_str());
+			}
+			work.commit();
+			
 			std::string token = jwt::create()
 				.set_type("JWT")
 				.set_issuer("StreamBot")
