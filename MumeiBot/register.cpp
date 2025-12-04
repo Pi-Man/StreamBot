@@ -259,7 +259,7 @@ int register_guild_add_entry_callback(struct mg_connection * conn, void * cbdata
 			work.exec("CREATE TABLE IF NOT EXISTS subscription(id SERIAL PRIMARY KEY, guild BIGINT, text_channel BIGINT, yt_channel VARCHAR(252))");
 			work.exec_params("INSERT INTO subscription(guild, text_channel, yt_channel) VALUES ($1, $2, $3)", guild, query["guild_channel_id"], query["yt_channel"]);
 			work.commit();
-			mg_send_http_redirect(conn, ".", 303);
+			mg_send_http_redirect(conn, ("/register/" + guild).c_str(), 303);
 			return 1;
 		}
 
@@ -294,7 +294,7 @@ int register_guild_remove_entry_callback(struct mg_connection * conn, void * cbd
 			work.exec("CREATE TABLE IF NOT EXISTS subscription(id SERIAL PRIMARY KEY, guild BIGINT, text_channel BIGINT, yt_channel VARCHAR(252))");
 			work.exec_params("DELETE FROM subscription WHERE guild=$1 AND text_channel=$2", guild, query["channel"]);
 			work.commit();
-			mg_send_http_redirect(conn, ".", 303);
+			mg_send_http_redirect(conn, ("/register/" + guild).c_str(), 303);
 			return 1;
 		}
 
