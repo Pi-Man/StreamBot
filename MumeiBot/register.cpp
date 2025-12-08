@@ -8,7 +8,7 @@
 #include <jwt-cpp/jwt.h>
 #include <uuid_v4.h>
 #include <pqxx/pqxx>
-#include <lexbor/html/parser.h>
+//#include <lexbor/html/parser.h>
 
 #include "util.h"
 #include "htmlform.h"
