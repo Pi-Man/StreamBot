@@ -236,12 +236,12 @@ CURLcode Discord_POST(const std::string & endpoint, const std::string & token) {
 // 	return NULL;
 // }
 
-void subscribe_RSS(const std::string & url, long long * lease) {
+void subscribe_RSS(const std::string & url, const std::string & query_params, long long * lease) {
 
 	output_type = "application/x-www-form-urlencoded";
 
 	HTMLForm hubform;
-	hubform["hub.callback"] = "https://3.141592.dev/subscriptioncallback";
+	hubform["hub.callback"] = "https://" HOST "/subscriptioncallback?" + query_params;
 	hubform["hub.mode"] = "subscribe";
 	hubform["hub.topic"] = url;
 	output = hubform;
@@ -270,7 +270,7 @@ void subscribe_RSS(const std::string & url, long long * lease) {
 	output = "";
 	sub_mutex.lock();
 	sub_topic = "";
-	if (lease) *lease = sub_lease;
+	if (lease) *lease = timeout ? 0 : sub_lease;
 
 	sub_mutex.unlock();
 }

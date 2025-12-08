@@ -22,8 +22,10 @@
 
 #ifdef _DEBUG
 #define WEB_ROOT "./webserver/root/"
+#define HOST "localhost:65000"
 #else
 #define WEB_ROOT "/home/ubuntu/webserver/root/"
+#define HOST "3.141592.dev"
 #endif
 #define DISCORD_API "https://discord.com/api/v9/"
 #define DISCORD_AUTH "https://discord.com/oauth2/authorize"
@@ -72,7 +74,7 @@ CURLcode Discord_POST(const std::string & endpoint, const std::string & token);
 
 //char * poll_RSS(const char * url);
 
-void subscribe_RSS(const std::string & url, long long * lease);
+void subscribe_RSS(const std::string & url, const std::string & query_params, long long * lease);
 
 int confirm_subscription(struct mg_connection * conn, const struct mg_request_info * query);
 

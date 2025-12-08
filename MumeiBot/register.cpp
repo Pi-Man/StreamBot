@@ -3,19 +3,18 @@
 #include <string>
 #include <mutex>
 #include <format>
+#include <regex>
 
 #include <jwt-cpp/jwt.h>
 #include <uuid_v4.h>
 #include <pqxx/pqxx>
+#include <lexbor/html/parser.h>
 
 #include "util.h"
 #include "htmlform.h"
 #include "httpheaders.h"
 
 static UUIDv4::UUIDGenerator<std::mt19937_64> uuid_generator;
-static std::mutex usermap_mutex;
-static std::unordered_map<std::string, std::pair<std::string, std::string>> usermap;
-static std::unordered_map<std::string, std::string> r_usermap;
 
 static std::string get_body(struct mg_connection * conn) {
 
@@ -86,6 +85,39 @@ static std::string remove_session(const HTTPCookies & cookies) {
 			return table[0][0].as<std::string>();
 		}
 
+		return "";
+	}
+	return "";
+}
+
+#define YT_CHANNEL_ID R"(UC[A-Za-z0-9_-]{21}[AQgw])"
+#define YT_VIDEO_ID R"([A-Za-z0-9_-]{10}[AEIMQUYcgkosw048])"
+
+static std::string normalize_yt_link(const std::string & original) {
+	static const std::regex at_channel_regex(R"(https://(?:www\.)youtube\.com/@\w*)");
+	static const std::regex id_channel_regex(R"(https://(?:www\.)youtube\.com/channel/)" YT_CHANNEL_ID);
+	static const std::regex video_regex(R"(https://(?:www\.)youtube\.com/watch?v=)" YT_VIDEO_ID);
+	if (std::regex_match(original, at_channel_regex) || std::regex_match(original, id_channel_regex) ) {
+		GET(original, NULL, NULL, NULL);
+		static const std::regex RSS_regex(R"-(<link rel="alternate" type="application/rss\+xml" title="RSS" href="(https://(?:www\.)youtube\.com)(/feeds/videos\.xml\?channel_id=)-" YT_CHANNEL_ID R"-()">)-");
+		std::smatch match;
+		if (std::regex_search(input, match, RSS_regex)) {
+			return match[1].str() + "/xml" + match[2].str();
+		}
+		return "";
+	}
+	else if (std::regex_match(original, video_regex)) {
+		GET(original, NULL, NULL, NULL);
+		static const std::regex RSS_regex(R"-(<link rel="alternate" type="application/json+oembed" href="(https://www.youtube.com/oembed?format=json&amp;url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3D)-" YT_VIDEO_ID R"-()" title=".*">)-");
+		std::smatch match;
+		if (std::regex_search(input, match, RSS_regex)) {
+			GET(match[1], NULL, NULL, NULL);
+			picojson::value embed;
+			picojson::parse(embed, input);
+			if (embed.get("author_url").is<std::string>()) {
+				return normalize_yt_link(embed.get("author_url").to_str());
+			}
+		}
 		return "";
 	}
 	return "";
@@ -242,7 +274,7 @@ int register_guild_add_entry_callback(struct mg_connection * conn, void * cbdata
 	std::string guild = path.substr(std::strlen("/register/"));
 	guild = guild.substr(0, guild.find('/'));
 
-	if (std::all_of(guild.begin(), guild.end(), [](const unsigned char & c) {return isdigit(c);})) {
+	if (std::all_of(guild.begin(), guild.end(), [](const unsigned char & c) { return isdigit(c); })) {
 
 		HTTPHeaders request_headers(info->http_headers, info->num_headers);
 
@@ -252,13 +284,28 @@ int register_guild_add_entry_callback(struct mg_connection * conn, void * cbdata
 
 			int64_t guild_id = std::stoll(guild);
 
-			HTMLForm query = get_body(conn);
+			HTMLForm query = get_body(conn); // TODO: rename text_channel field
 
-			pqxx::connection pgconn(CONN_STR);
-			pqxx::work work(pgconn);
-			work.exec("CREATE TABLE IF NOT EXISTS subscription(id SERIAL PRIMARY KEY, guild BIGINT, text_channel BIGINT, yt_channel VARCHAR(252))");
-			work.exec_params("INSERT INTO subscription(guild, text_channel, yt_channel) VALUES ($1, $2, $3)", guild, query["guild_channel_id"], query["yt_channel"]);
-			work.commit();
+			std::string yt_channel = normalize_yt_link(query["yt_channel"]);
+
+			if (!yt_channel.empty()) {
+				pqxx::connection pgconn(CONN_STR);
+				pqxx::work work(pgconn);
+				work.exec("CREATE TABLE IF NOT EXISTS subscription(id SERIAL PRIMARY KEY, guild BIGINT, text_channel BIGINT, yt_channel VARCHAR(252))");
+				work.exec_params("INSERT INTO subscription(guild, text_channel, yt_channel) VALUES ($1, $2, $3)", guild, query["guild_channel_id"], query["yt_channel"]);
+				
+				HTMLForm rss_form;
+				rss_form["text_channel"] = query["guild_channel_id"];
+				long long lease;
+				subscribe_RSS(yt_channel, rss_form, &lease);
+
+				if (!lease) {
+					work.abort(); // TODO: error page
+				}
+				else {
+					work.commit();
+				}
+			}
 			mg_send_http_redirect(conn, ("/register/" + guild).c_str(), 303);
 			return 1;
 		}
