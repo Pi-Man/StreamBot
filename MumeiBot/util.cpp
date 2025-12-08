@@ -270,7 +270,7 @@ void subscribe_RSS(const std::string & url, const std::string & query_params, lo
 	output = "";
 	sub_mutex.lock();
 	sub_topic = "";
-	if (lease) *lease = timeout ? 0 : sub_lease;
+	if (lease) *lease = !timeout ? 0 : sub_lease;
 
 	sub_mutex.unlock();
 }
