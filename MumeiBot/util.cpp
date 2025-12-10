@@ -7,6 +7,7 @@
 #include <atomic>
 #include <algorithm>
 #include <sstream>
+#include <regex>
 
 #define PICOJSON_USE_INT64
 #include <picojson/picojson.h>
@@ -216,6 +217,23 @@ CURLcode Discord_POST(const std::string & endpoint, const std::string & token) {
 
 }
 
+std::string get_body(struct mg_connection * conn) {
+
+	std::string data;
+
+	int count;
+	do {
+		char buffer[256];
+		count = mg_read(conn, buffer, 255);
+		if (count > 0) {
+			buffer[count] = 0;
+			data += buffer;
+		}
+	} while(count > 0);
+
+	return data;
+}
+
 // char * poll_RSS(const char * url) {
 
 // 	ERROR_CURL(GET(url), { return NULL; });
@@ -381,6 +399,15 @@ bool bot_in_guild(const int64_t guild_id) {
 	curl_slist_free_all(header);
 
     return code >= 200 && code < 300;
+}
+
+std::string get_link(const std::string &body) {
+	std::regex regex(R"-(<link rel="alternate" href="(https://(?:www)\.youtube\.com/watch\?v=)-" YT_VIDEO_ID R"-()"/>)-");
+    std::smatch match;
+	if (std::regex_search(body, match, regex)) {
+		return match[1];
+	}
+	return std::string();
 }
 
 std::string format(const std::string & format, const std::initializer_list<const std::string> && args) {

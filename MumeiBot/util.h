@@ -45,6 +45,9 @@
 
 #define CONN_STR "host=localhost port=65001 user=postgres password=postgres"
 
+#define YT_CHANNEL_ID R"(UC[A-Za-z0-9_-]{21}[AQgw])"
+#define YT_VIDEO_ID R"([A-Za-z0-9_-]{10}[AEIMQUYcgkosw048])"
+
 extern std::string input;
 
 extern std::string output;
@@ -72,6 +75,8 @@ CURLcode DELETE(const std::string & url, struct curl_slist * header, const char 
 
 CURLcode Discord_POST(const std::string & endpoint, const std::string & token);
 
+std::string get_body(struct mg_connection * conn);
+
 //char * poll_RSS(const char * url);
 
 void subscribe_RSS(const std::string & url, const std::string & query_params, long long * lease);
@@ -83,6 +88,8 @@ std::vector<Guild> get_guilds(const std::string & auth_token);
 std::vector<Channel> get_guild_channels(const int64_t guild_id, const std::string & auth_token);
 
 bool bot_in_guild(const int64_t guild_id);
+
+std::string get_link(const std::string & body);
 
 std::string format(const std::string & format, const std::initializer_list<const std::string> && args);
 

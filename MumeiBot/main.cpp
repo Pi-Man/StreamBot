@@ -8,6 +8,7 @@
 #include "civetweb.h"
 #include "util.h"
 #include "register.h"
+#include "htmlform.h"
 
 int dynamic_page_request(struct mg_connection * conn, void * cbdata);
 
@@ -136,17 +137,23 @@ int subscription_page_request(struct mg_connection * conn, void * cbdata) {
 		return confirm_subscription(conn, info);
 	}
 	else if (strcmp(info->request_method, "POST") == 0) {
-		puts("POST subscription");
-		char buffer[256];
-		int bytes = 0;
-		do {
-			bytes = mg_read(conn, buffer, 256);
-			write_data(buffer, 1, bytes, NULL);
-		} while (bytes == 256);
-		mg_printf(conn,
-			"HTTP/1.1 204 No Content\r\nConnection: "
-			"close\r\n\r\n");
-		puts(input.c_str());
+		HTMLForm query = info->query_string;
+		if (query.has("text_channel")) {
+			puts("POST subscription");
+			std::string body = get_body(conn);
+			mg_printf(conn,
+				"HTTP/1.1 204 No Content\r\nConnection: "
+				"close\r\n\r\n");
+			std::string url = get_link(body);
+
+			picojson::value message_body { picojson::object {
+				{"content", picojson::value(url)}
+			}};
+
+			output = message_body.serialize();
+
+			Discord_POST("channels/" + query["text_channel"] + "/messages", load_file("token.txt"));
+		}
 	}
 
 	return 1;

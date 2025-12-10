@@ -16,23 +16,6 @@
 
 static UUIDv4::UUIDGenerator<std::mt19937_64> uuid_generator;
 
-static std::string get_body(struct mg_connection * conn) {
-
-	std::string data;
-
-	int count;
-	do {
-		char buffer[256];
-		count = mg_read(conn, buffer, 255);
-		if (count > 0) {
-			buffer[count] = 0;
-			data += buffer;
-		}
-	} while(count > 0);
-
-	return data;
-}
-
 static std::string authenticate(const HTTPCookies & cookies) {
 	if (cookies.has("JWT")) {
 
@@ -89,9 +72,6 @@ static std::string remove_session(const HTTPCookies & cookies) {
 	}
 	return "";
 }
-
-#define YT_CHANNEL_ID R"(UC[A-Za-z0-9_-]{21}[AQgw])"
-#define YT_VIDEO_ID R"([A-Za-z0-9_-]{10}[AEIMQUYcgkosw048])"
 
 static std::string normalize_yt_link(const std::string & original) {
 	static const std::regex at_channel_regex(R"(https://(?:www\.)youtube\.com/@\w*)");
