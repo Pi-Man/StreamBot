@@ -153,6 +153,8 @@ int subscription_page_request(struct mg_connection * conn, void * cbdata) {
 			output = message_body.serialize();
 
 			Discord_POST("channels/" + query["text_channel"] + "/messages", load_file("token.txt"));
+
+			puts(output.c_str());
 		}
 	}
 
