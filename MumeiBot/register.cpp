@@ -503,20 +503,20 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 			pqxx::connection pqconn(CONN_STR);
 			pqxx::work work(pqconn);
 			std::string token_part = access_token.substr(0, access_token.find('.'));
-			pqxx::result table = work.exec("SELECT id FROM session WHERE access_token LIKE '" + pqconn.esc(std::string_view(token_part)) + "%';");
-			if (table.empty()) {
+			//pqxx::result table = work.exec("SELECT id FROM session WHERE access_token LIKE '" + pqconn.esc(std::string_view(token_part)) + "%';");
+			//if (table.empty()) {
 				work.exec_params("INSERT INTO session(id, access_token, refresh_token) VALUES($1, $2, $3);", uuid, access_token, refresh_token);
 				printf("created new user %s\n", uuid.c_str());
-			}
-			else {
-				uuid = table[0][0].as<std::string>();
-				for (int i = 1; i < table.size(); i++) {
-					pqxx::result table2 = work.exec_params("DELETE FROM session WHERE id=$1 RETURNING access_token;", table[i][0].as<std::string>());
-					revoke_token(table[0][0].as<std::string>());
-				}
-				work.exec_params("UPDATE session SET access_token=$2, refresh_token=$3 WHERE id=$1;", uuid, access_token, refresh_token);
-				printf("found existing user %s\n", uuid.c_str());
-			}
+			// }
+			// else {
+			// 	uuid = table[0][0].as<std::string>();
+			// 	for (int i = 1; i < table.size(); i++) {
+			// 		pqxx::result table2 = work.exec_params("DELETE FROM session WHERE id=$1 RETURNING access_token;", table[i][0].as<std::string>());
+			// 		revoke_token(table[0][0].as<std::string>());
+			// 	}
+			// 	work.exec_params("UPDATE session SET access_token=$2, refresh_token=$3 WHERE id=$1;", uuid, access_token, refresh_token);
+			// 	printf("found existing user %s\n", uuid.c_str());
+			// }
 			work.commit();
 			
 			std::string token = jwt::create()
