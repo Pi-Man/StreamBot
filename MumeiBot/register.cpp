@@ -13,6 +13,7 @@
 #include "util.h"
 #include "htmlform.h"
 #include "httpheaders.h"
+#include "discord.h"
 
 static UUIDv4::UUIDGenerator<std::mt19937_64> uuid_generator;
 
@@ -178,13 +179,26 @@ void revoke_token(const std::string & access_token) {
 }
 
 int login_callback(struct mg_connection * conn, void * cbdata) {
-	HTTPHeaders response_headers;
-	response_headers["Content-Type"] = "text/html; charset=utf-8";
-	response_headers["Connection"] = "close";
-	mg_printf(conn,
-		"HTTP/1.1 200 OK\r\n%s", std::string(response_headers).c_str());
-	mg_printf(conn, load_file(WEB_ROOT "register/login/index.html").c_str(), AUTH_URL);
-	return 1;
+
+	const mg_request_info * info = mg_get_request_info(conn);
+
+	HTTPHeaders request_headers(info->http_headers, info->num_headers);
+	
+	std::string access_token = authenticate(request_headers.cookies);
+
+	if (access_token.empty()) {
+		HTTPHeaders response_headers;
+		response_headers["Content-Type"] = "text/html; charset=utf-8";
+		response_headers["Connection"] = "close";
+		mg_printf(conn,
+			"HTTP/1.1 200 OK\r\n%s", std::string(response_headers).c_str());
+		mg_printf(conn, load_file(WEB_ROOT "register/login/index.html").c_str(), AUTH_URL);
+		return 1;
+	}
+	else {
+		mg_send_http_redirect(conn, "/register/", 303);
+		return 1;
+	}
 }
 
 int logout_callback(struct mg_connection * conn, void * cbdata) {
@@ -192,9 +206,9 @@ int logout_callback(struct mg_connection * conn, void * cbdata) {
 	const struct mg_request_info * info = mg_get_request_info(conn);
 	HTTPHeaders request_headers(info->http_headers, info->num_headers);
 
-	std::string auth_token = remove_session(request_headers.cookies);
-	if (!auth_token.empty()) {
-		revoke_token(auth_token);
+	std::string access_token = remove_session(request_headers.cookies);
+	if (!access_token.empty()) {
+		revoke_token(access_token);
 	}
 
 	HTTPHeaders response_headers;
@@ -204,46 +218,6 @@ int logout_callback(struct mg_connection * conn, void * cbdata) {
 	mg_printf(conn, "HTTP/1.1 303 See Other\r\n%s", std::string(response_headers).c_str());
 
 	return 1;
-}
-
-static std::string get_guild_form(const std::string & auth_token) {
-	std::stringstream html;
-
-	std::vector<Guild> guilds = get_guilds(auth_token);
-
-	html << "<form>";
-	html << "<lable for='guild'>Guild: </lable>";
-	html << "<select name='guild' id='guild'>";
-	for (const Guild & guild : guilds) {
-		if (guild.permissions & ((1 << 5)))
-			html << "<option value='" << guild.id << "'>" << guild.name << "</option>";
-	}
-	html << "</select>";
-	html << "<input type='submit' value='Next'>";
-	html << "</form>";
-
-	return html.str();
-}
-
-static std::string get_channels_form(int64_t guild_id, const std::string & bot_token) {
-	std::stringstream html;
-
-	std::vector<Channel> channels = get_guild_channels(guild_id, bot_token);
-
-	html << "<form>";
-	html << "<lable for='channel'>Channel: </lable>";
-	html << "<select name='channel' id='channel'>";
-	for (const Channel & channel : channels) {
-		if (channel.type == Channel::GUILD_TEXT || channel.type == Channel::GUILD_ANNOUNCEMENT)
-			html << "<option value='" << channel.id << "'>" << channel.name << "</option>";
-	}
-	html << "</select>";
-	html << "<lable for='yt'>Youtube Channel Link: </lable>";
-	html << "<input id='yt' name='yt' type='text'>";
-	html << "<input type='submit' value='Subscribe'>";
-	html << "</form>";
-
-	return html.str();
 }
 
 int register_guild_add_entry_callback(struct mg_connection * conn, void * cbdata) {
@@ -258,9 +232,9 @@ int register_guild_add_entry_callback(struct mg_connection * conn, void * cbdata
 
 		HTTPHeaders request_headers(info->http_headers, info->num_headers);
 
-		std::string auth_token = authenticate(request_headers.cookies);
+		std::string access_token = authenticate(request_headers.cookies);
 
-		if (!auth_token.empty()) {
+		if (!access_token.empty()) {
 
 			int64_t guild_id = std::stoll(guild);
 
@@ -308,9 +282,9 @@ int register_guild_remove_entry_callback(struct mg_connection * conn, void * cbd
 
 		HTTPHeaders request_headers(info->http_headers, info->num_headers);
 
-		std::string auth_token = authenticate(request_headers.cookies);
+		std::string access_token = authenticate(request_headers.cookies);
 
-		if (!auth_token.empty()) {
+		if (!access_token.empty()) {
 
 			int64_t guild_id = std::stoll(guild);
 
@@ -342,9 +316,9 @@ int register_guild_callback(struct mg_connection * conn, void * cbdata) {
 
 		HTTPHeaders request_headers(info->http_headers, info->num_headers);
 
-		std::string auth_token = authenticate(request_headers.cookies);
+		std::string access_token = authenticate(request_headers.cookies);
 
-		if (!auth_token.empty()) {
+		if (!access_token.empty()) {
 
 			int64_t guild_id = std::stoll(guild);
 
@@ -357,7 +331,7 @@ int register_guild_callback(struct mg_connection * conn, void * cbdata) {
 			work.exec("CREATE TABLE IF NOT EXISTS subscription(id SERIAL PRIMARY KEY, guild BIGINT, text_channel BIGINT, yt_channel VARCHAR(252))");
 			pqxx::result table = work.exec_params("SELECT text_channel, yt_channel FROM subscription WHERE guild=$1", guild);
 
-			std::vector<Guild> guilds = get_guilds(auth_token);
+			std::vector<Guild> guilds = get_user_guilds(access_token);
 
 			auto it = std::find_if(guilds.begin(), guilds.end(), [guild_id](const Guild & guild){ return guild.id == guild_id; });
 
@@ -413,37 +387,17 @@ int register_callback(struct mg_connection * conn, void * cbdata) {
 	HTTPHeaders request_headers(info->http_headers, info->num_headers);
 	HTMLForm query = info->query_string;
 
-	std::string auth_token = authenticate(request_headers.cookies);
+	std::string access_token = authenticate(request_headers.cookies);
 
-	if (!auth_token.empty()) {
+	if (!access_token.empty()) {
 
-		std::string auth_header = "Authorization: Bearer " + auth_token;
-
-		curl_slist * header = curl_slist_append(NULL, auth_header.c_str());
-
-		std::string identify_url = "https://discord.com/api/v9/users/@me";
-
-		GET(identify_url, header, NULL, NULL);
-
-		picojson::value json;
-		picojson::parse(json, input);
-		std::string name;
-
-		if (json.get("global_name").is<std::string>()) {
-			name = json.get("global_name").to_str();
-		}
-		else if (json.get("username").is<std::string>()) {
-			name = json.get("username").to_str();
-		}
-		else {
-			name = "nobody";
-		}
+		std::string name = get_user_name(access_token);
 
 		HTTPHeaders response_headers;
 		response_headers["Content-Type"] = "text/html; charset=utf-8";
 		response_headers["Connection"] = "close";
 		std::string table_rows;
-		const std::vector<Guild> guilds = get_guilds(auth_token);
+		const std::vector<Guild> guilds = get_user_guilds(access_token);
 		for (const Guild & guild : guilds) {
 			if (guild.permissions & (1 << 5)) {
 				bool in_guild = bot_in_guild(guild.id);
@@ -467,6 +421,9 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 	const struct mg_request_info * info = mg_get_request_info(conn);
 
 	HTMLForm query = info->query_string;
+	HTTPHeaders request_headers(info->http_headers, info->num_headers);
+
+	std::string access_token = authenticate(request_headers.cookies);
 
 	if (query.has("code")) {
 		// if (query.has("guild_id")) {
@@ -498,25 +455,24 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 		}
 		else {
 			std::string uuid = uuid_generator.getUUID().str();
-			std::string access_token = json.get("access_token").to_str();
+			std::string new_access_token = json.get("access_token").to_str();
 			std::string refresh_token = json.get("refresh_token").to_str();
 			pqxx::connection pqconn(CONN_STR);
 			pqxx::work work(pqconn);
-			std::string token_part = access_token.substr(0, access_token.find('.'));
-			//pqxx::result table = work.exec("SELECT id FROM session WHERE access_token LIKE '" + pqconn.esc(std::string_view(token_part)) + "%';");
-			//if (table.empty()) {
-				work.exec_params("INSERT INTO session(id, access_token, refresh_token) VALUES($1, $2, $3);", uuid, access_token, refresh_token);
+			pqxx::result table = work.exec_params("SELECT id FROM session WHERE access_token=$1", access_token);
+			if (table.empty()) {
+				work.exec_params("INSERT INTO session(id, access_token, refresh_token) VALUES($1, $2, $3);", uuid, new_access_token, refresh_token);
 				printf("created new user %s\n", uuid.c_str());
-			// }
-			// else {
-			// 	uuid = table[0][0].as<std::string>();
-			// 	for (int i = 1; i < table.size(); i++) {
-			// 		pqxx::result table2 = work.exec_params("DELETE FROM session WHERE id=$1 RETURNING access_token;", table[i][0].as<std::string>());
-			// 		revoke_token(table[0][0].as<std::string>());
-			// 	}
-			// 	work.exec_params("UPDATE session SET access_token=$2, refresh_token=$3 WHERE id=$1;", uuid, access_token, refresh_token);
-			// 	printf("found existing user %s\n", uuid.c_str());
-			// }
+			}
+			else {
+				uuid = table[0][0].as<std::string>();
+				for (int i = 1; i < table.size(); i++) {
+					pqxx::result table2 = work.exec_params("DELETE FROM session WHERE id=$1 RETURNING access_token;", table[i][0].as<std::string>());
+					revoke_token(table[0][0].as<std::string>());
+				}
+				work.exec_params("UPDATE session SET access_token=$2, refresh_token=$3 WHERE id=$1;", uuid, new_access_token, refresh_token);
+				printf("found existing user %s\n", uuid.c_str());
+			}
 			work.commit();
 			
 			std::string token = jwt::create()

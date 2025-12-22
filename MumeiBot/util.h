@@ -30,12 +30,12 @@
 #define DISCORD_API "https://discord.com/api/v9/"
 #define DISCORD_AUTH "https://discord.com/oauth2/authorize"
 #ifdef _DEBUG
-#define AUTH_URL "https://discord.com/oauth2/authorize?client_id=1336495404308762685&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A65000%2Foauth%2Fdiscord%2Fcallback&scope=identify+guilds"
-#define REDIRECT_URL "http://localhost:65000/oauth/discord/callback"
+#define AUTH_URL "https://discord.com/oauth2/authorize?client_id=1336495404308762685&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A65000%2Fregister%2Foauth%2Fdiscord%2Fcallback&scope=identify+guilds"
+#define REDIRECT_URL "http://localhost:65000/register/oauth/discord/callback"
 #define BOT_REDIRECT "http://localhost:65000/register/"
 #else
-#define AUTH_URL "https://discord.com/oauth2/authorize?client_id=1336495404308762685&response_type=code&redirect_uri=https%3A%2F%2F3.141592.dev%2Foauth%2Fdiscord%2Fcallback&scope=identify+guilds"
-#define REDIRECT_URL "https://3.141592.dev/oauth/discord/callback"
+#define AUTH_URL "https://discord.com/oauth2/authorize?client_id=1336495404308762685&response_type=code&redirect_uri=https%3A%2F%2F3.141592.dev%2Fregister%2Foauth%2Fdiscord%2Fcallback&scope=identify+guilds"
+#define REDIRECT_URL "https://3.141592.dev/register/oauth/discord/callback"
 #define BOT_REDIRECT "https://3.141592.dev/register/"
 #endif
 #define TOKEN_URL "https://discord.com/api/oauth2/token"
@@ -82,12 +82,6 @@ std::string get_body(struct mg_connection * conn);
 void subscribe_RSS(const std::string & url, const std::string & query_params, long long * lease);
 
 int confirm_subscription(struct mg_connection * conn, const struct mg_request_info * query);
-
-std::vector<Guild> get_guilds(const std::string & auth_token);
-
-std::vector<Channel> get_guild_channels(const int64_t guild_id, const std::string & auth_token);
-
-bool bot_in_guild(const int64_t guild_id);
 
 std::string get_link(const std::string & body);
 

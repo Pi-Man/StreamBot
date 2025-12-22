@@ -37,7 +37,7 @@ int main(void) {
 	mg_set_request_handler(ctx, "/login/", redirect_to, (void*) "/register/login/");
 	mg_set_request_handler(ctx, "/register/login/$", login_callback, NULL);
 	mg_set_request_handler(ctx, "/register/logout/$", logout_callback, NULL);
-	mg_set_request_handler(ctx, "/oauth/discord/callback", oauth_callback, NULL);
+	mg_set_request_handler(ctx, "/register/oauth/discord/callback", oauth_callback, NULL);
 	mg_set_request_handler(ctx, "/register/$", register_callback, NULL);
 	mg_set_request_handler(ctx, "/register/*/rem-entry", register_guild_remove_entry_callback, NULL);
 	mg_set_request_handler(ctx, "/register/*/add-entry", register_guild_add_entry_callback, NULL);
@@ -58,63 +58,8 @@ int main(void) {
 
 	}
 
-	// const char * token = get_token();
-
-	// while (1) {
-
-	// 	const char * entry = poll_RSS("https://www.youtube.com/feeds/videos.xml?channel_id=UC3n5uGu18FoCy23ggWWp8tA");
-
-	// 	if (is_new_entry(entry)) {
-	// 		puts(entry);
-
-	// 		const char * link_start = strstr(entry, "<link rel=\"alternate\" href=\"");
-
-	// 		if (link_start) {
-	// 			link_start += 28; // strlen("<link rel=\"alternate\" href=\"");
-	// 			const char * link_end = strstr(link_start, "\"");
-
-	// 			const char * endpoint = "channels/599365997920649216/messages";
-
-	// 			output = malloc(256);
-	// 			output_cap = 256;
-	// 			sprintf(output, "{\"content\": \"%.*s\"}", (int)(link_end - link_start), link_start);
-	// 			output_size = strlen(output);
-
-	// 			//char * url = malloc(link_end - link_start + 1);
-	// 			//strncpy(url, link_start, link_end - link_start);
-	// 			//url[link_end - link_start] = 0;
-
-	// 			//GET(url);
-
-	// 			//char * json = strstr(input, "ytInitialData = ") + 16;
-	// 			//char * json_end = find_json_end(json);
-	// 			//*json_end = 0;
-
-	// 			Discord_POST(endpoint, token);
-
-	// 			free(output);
-
-	// 			//puts(json);
-	// 		}
-	// 	}
-
-	// 	SLEEP(60 * 5);
-
-	// }
-
 	return 0;
 }
-
-// char * find_json_end(char * json) {
-// 	size_t count = 0;
-// 	if (*json != '{') return NULL;
-// 	do {
-// 		if (*json == '{') count++;
-// 		if (*json == '}') count--;
-// 		json++;
-// 	} while (count);
-// 	return json;
-// }
 
 volatile int count = 0;
 
