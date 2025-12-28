@@ -62,10 +62,12 @@ function moven(length)
 end
 
 function moveup()
-    local info = turtle.inspect()
+    local block
+    local info
+    block, info = turtle.inspect()
     local flag
     local err
-    if info.name == "minecraft:air" then
+    if not block or info.name == "minecraft:air" then
         flag, err = turtle.up()
     else
         flag, err = turtle.digup()
@@ -92,10 +94,12 @@ function moveupn(length)
 end
 
 function movedown()
-    local info = turtle.inspect()
+    local block
+    local info
+    block, info = turtle.inspect()
     local flag
     local err
-    if info.name == "minecraft:air" then
+    if not block or info.name == "minecraft:air" then
         flag, err = turtle.down()
     else
         flag, err = turtle.digdown()
