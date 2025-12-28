@@ -28,8 +28,16 @@ function move()
         if flag then flag, err = turtle.forward() end
     end
     if not flag then
-        print(err)
         return false, err
+    end
+    if turtle.facing == POS_Z then
+        turtle.z = turtle.z + 1
+    elseif turtle.facing == POS_X then
+        turtle.x = turtle.x + 1
+    elseif turtle.facing == NEG_Z then
+        turtle.z = turtle.z - 1
+    elseif turtle.facing == NEG_X then
+        turtle.x = turtle.x - 1
     end
     return true
 end
@@ -40,7 +48,64 @@ function moven(length)
         local err
         flag, err = move()
         if not flag then
-            print(err)
+            return false
+        end
+    end
+    return true
+end
+
+function moveup()
+    local info = turtle.inspect()
+    local flag
+    local err
+    if info.name == "minecraft:air" then
+        flag, err = turtle.up()
+    else
+        flag, err = turtle.digup()
+        if flag then flag, err = turtle.up() end
+    end
+    if not flag then
+        return false, err
+    end
+    turtle.y = turtle.y + 1
+    return true
+end
+
+function moveupn(length)
+    while length > 0 do
+        local flag
+        local err
+        flag, err = moveup()
+        if not flag then
+            return false
+        end
+    end
+    return true
+end
+
+function movedown()
+    local info = turtle.inspect()
+    local flag
+    local err
+    if info.name == "minecraft:air" then
+        flag, err = turtle.down()
+    else
+        flag, err = turtle.digdown()
+        if flag then flag, err = turtle.down() end
+    end
+    if not flag then
+        return false, err
+    end
+    turtle.y = turtle.y - 1
+    return true
+end
+
+function movedownn(length)
+    while length > 0 do
+        local flag
+        local err
+        flag, err = movedown()
+        if not flag then
             return false
         end
     end
@@ -58,7 +123,6 @@ function travelX(length)
     local err
     flag, err = moven(length)
     if not flag then
-        print(err)
         return false
     end
     return true
@@ -75,7 +139,6 @@ function travelY(length)
     local err
     flag, err = moven(length)
     if not flag then
-        print(err)
         return false
     end
     return true
@@ -92,14 +155,51 @@ function travelZ(length)
     local err
     flag, err = moven(length)
     if not flag then
-        print(err)
         return false
     end
     return true
 end
 
 function dig_slice(width, height)
-
+    local flag
+    local err
+    flag, err = travelX(-math.floor((width - 1) / 2))
+    if not flag then
+        return false, err
+    end
+    local x = math.floor(width / 2)
+    if height > 1 then
+        flag, err = travelY(1)
+        if not flag then
+            return false, err
+        end
+        local h = height - 2
+        local dir = 1
+        while turtle.x < x do
+            flag, err = travelY(h * dir)
+            if not flag then
+                return false, err
+            end
+            flag, err = travelX(1)
+            if not flag then
+                return false, err
+            end
+            dir = dir * -1
+        end
+        flag, err = travleY(h * dir)
+        if not flag then
+            return false, err
+        end
+    end
+    flag, err = travelY(-turtle.y)
+    if not flag then
+        return false, err
+    end
+    flag, err = travelX(-turtle.x)
+    if not flag then
+        return false, err
+    end
+    return true
 end
 
 function dig_room(width, height, depth)
