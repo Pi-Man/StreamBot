@@ -210,6 +210,7 @@ function dig_room(width, height, depth)
     local flag
     local err
     for d = 0,depth-1 do
+        print("preparing next slice")
         flag, err = travelZ(1)
         if not flag then
             return false, err
