@@ -8,11 +8,11 @@ function face(dir)
     while ang >= 2 do ang = ang - 4 end
     while ang < -2 do ang = ang + 4 end
     while ang < 0 do
-        turtle.rotateRight()
+        turtle.turnRight()
         ang = ang + 1
     end
     while ang > 0 do
-        turtle.rotateLeft()
+        turtle.turnLeft()
         ang = ang - 1
     end
 end
