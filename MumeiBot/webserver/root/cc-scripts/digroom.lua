@@ -140,10 +140,13 @@ end
 
 function travelY(length)
     print("travelY")
-    length = math.abs(length)
     local flag
     local err
-    flag, err = moven(length)
+    if length < 0 then
+        flag, err = movedownn(-length)
+    else
+        flag, err = moveupn(length)
+    end
     if not flag then
         return false
     end
