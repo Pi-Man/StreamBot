@@ -24,7 +24,7 @@ function move()
     block, info = turtle.inspect()
     local flag
     local err
-    if block or info.name == "minecraft:air" then
+    if not block or info.name == "minecraft:air" then
         print("moving forward")
         flag, err = turtle.forward()
     else
