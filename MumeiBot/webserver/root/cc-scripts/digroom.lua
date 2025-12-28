@@ -18,10 +18,12 @@ function face(dir)
 end
 
 function move()
-    local info = turtle.inspect()
+    local block
+    local info
+    block, info = turtle.inspect()
     local flag
     local err
-    if info.name == "minecraft:air" then
+    if block or info.name == "minecraft:air" then
         flag, err = turtle.forward()
     else
         flag, err = turtle.dig()
