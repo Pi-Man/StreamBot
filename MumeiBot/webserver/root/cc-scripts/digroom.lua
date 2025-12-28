@@ -163,6 +163,7 @@ function travelZ(length)
 end
 
 function dig_slice(width, height)
+    print("digging slice")
     local flag
     local err
     flag, err = travelX(-math.floor((width - 1) / 2))
@@ -205,6 +206,7 @@ function dig_slice(width, height)
 end
 
 function dig_room(width, height, depth)
+    print("digging room")
     local flag
     local err
     for d = 0,depth-1 do
@@ -212,6 +214,7 @@ function dig_room(width, height, depth)
         if not flag then
             return false, err
         end
+        print("next slice")
         flag, err = dig_slice(width, height)
         if not flag then
             return false, err
@@ -242,6 +245,8 @@ if x == nil or y == nil or z == nil then
     print("Dimensions must be numbers")
     return
 end
+
+print("initialized")
 
 local flag
 local err
