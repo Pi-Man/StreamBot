@@ -272,8 +272,9 @@ if not flag then
     print(err)
 end
 
-travelZ(-turtle.z)
+travelZ(-turtle.z + 1)
 travelY(-turtle.y)
 travelX(-turtle.x)
+travelZ(-1)
 
 face(POS_Z)
