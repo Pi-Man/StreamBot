@@ -64,7 +64,7 @@ end
 function moveup()
     local block
     local info
-    block, info = turtle.inspect()
+    block, info = turtle.inspectUp()
     local flag
     local err
     if not block or info.name == "minecraft:air" then
@@ -96,7 +96,7 @@ end
 function movedown()
     local block
     local info
-    block, info = turtle.inspect()
+    block, info = turtle.inspectDown()
     local flag
     local err
     if not block or info.name == "minecraft:air" then
