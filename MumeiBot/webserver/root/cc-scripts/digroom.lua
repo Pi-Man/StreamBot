@@ -205,10 +205,16 @@ function dig_slice(width, height)
 end
 
 function dig_room(width, height, depth)
+    local flag
+    local err
     for d = 0,depth-1 do
-        travelZ(1)
-        if not dig_slice(width, height) then
-            return false
+        flag, err = travelZ(1)
+        if not flag then
+            return false, err
+        end
+        flag, err = dig_slice(width, height)
+        if not flag then
+            return false, err
         end
     end
     return true
@@ -237,5 +243,11 @@ if x == nil or y == nil or z == nil then
     return
 end
 
-dig_room(x, y, z)
+local flag
+local err
+flag, err = dig_room(x, y, z)
+
+if not flag then
+    print(err)
+end
 
