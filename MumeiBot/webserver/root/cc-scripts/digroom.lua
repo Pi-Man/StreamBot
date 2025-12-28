@@ -200,7 +200,7 @@ function dig_slice(width, height)
             end
             dir = dir * -1
         end
-        flag, err = travleY(h * dir)
+        flag, err = travelY(h * dir)
         if not flag then
             return false, err
         end
