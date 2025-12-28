@@ -116,7 +116,7 @@ function travelX(length)
     if length < 0 then
         face(NEG_X)
     else
-        fase(POS_X)
+        face(POS_X)
     end
     length = math.abs(length)
     local flag
@@ -132,7 +132,7 @@ function travelY(length)
     if length < 0 then
         face(NEG_Y)
     else
-        fase(POS_Y)
+        face(POS_Y)
     end
     length = math.abs(length)
     local flag
@@ -148,7 +148,7 @@ function travelZ(length)
     if length < 0 then
         face(NEG_Z)
     else
-        fase(POS_Z)
+        face(POS_Z)
     end
     length = math.abs(length)
     local flag
