@@ -140,11 +140,6 @@ end
 
 function travelY(length)
     print("travelY")
-    if length < 0 then
-        face(NEG_Y)
-    else
-        face(POS_Y)
-    end
     length = math.abs(length)
     local flag
     local err
