@@ -18,20 +18,24 @@ function face(dir)
 end
 
 function move()
+    print("checking block")
     local block
     local info
     block, info = turtle.inspect()
     local flag
     local err
     if block or info.name == "minecraft:air" then
+        print("moving forward")
         flag, err = turtle.forward()
     else
+        print("digging forward")
         flag, err = turtle.dig()
         if flag then flag, err = turtle.forward() end
     end
     if not flag then
         return false, err
     end
+    print("end moved 1 step")
     if turtle.facing == POS_Z then
         turtle.z = turtle.z + 1
     elseif turtle.facing == POS_X then
@@ -41,10 +45,12 @@ function move()
     elseif turtle.facing == NEG_X then
         turtle.x = turtle.x - 1
     end
+    print("local pos updated")
     return true, nil
 end
 
 function moven(length)
+    print("moving")
     while length > 0 do
         local flag
         local err
@@ -147,11 +153,13 @@ function travelY(length)
 end
 
 function travelZ(length)
+    print("preparing to travel z")
     if length < 0 then
         face(NEG_Z)
     else
         face(POS_Z)
     end
+    print("turned")
     length = math.abs(length)
     local flag
     local err
