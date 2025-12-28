@@ -41,7 +41,7 @@ function move()
     elseif turtle.facing == NEG_X then
         turtle.x = turtle.x - 1
     end
-    return true
+    return true, nil
 end
 
 function moven(length)
@@ -53,7 +53,7 @@ function moven(length)
             return false
         end
     end
-    return true
+    return true, nil
 end
 
 function moveup()
@@ -70,7 +70,7 @@ function moveup()
         return false, err
     end
     turtle.y = turtle.y + 1
-    return true
+    return true, nil
 end
 
 function moveupn(length)
@@ -82,7 +82,7 @@ function moveupn(length)
             return false
         end
     end
-    return true
+    return true, nil
 end
 
 function movedown()
@@ -99,7 +99,7 @@ function movedown()
         return false, err
     end
     turtle.y = turtle.y - 1
-    return true
+    return true, nil
 end
 
 function movedownn(length)
@@ -111,7 +111,7 @@ function movedownn(length)
             return false
         end
     end
-    return true
+    return true, nil
 end
 
 function travelX(length)
@@ -127,7 +127,7 @@ function travelX(length)
     if not flag then
         return false
     end
-    return true
+    return true, nil
 end
 
 function travelY(length)
@@ -143,7 +143,7 @@ function travelY(length)
     if not flag then
         return false
     end
-    return true
+    return true, nil
 end
 
 function travelZ(length)
@@ -159,7 +159,7 @@ function travelZ(length)
     if not flag then
         return false
     end
-    return true
+    return true, nil
 end
 
 function dig_slice(width, height)
@@ -201,7 +201,7 @@ function dig_slice(width, height)
     if not flag then
         return false, err
     end
-    return true
+    return true, nil
 end
 
 function dig_room(width, height, depth)
@@ -217,7 +217,7 @@ function dig_room(width, height, depth)
             return false, err
         end
     end
-    return true
+    return true, nil
 end
 
 
