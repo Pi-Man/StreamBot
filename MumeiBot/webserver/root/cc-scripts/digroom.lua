@@ -250,12 +250,12 @@ local x = tonumber(arg[1])
 local y = tonumber(arg[2])
 local z = tonumber(arg[3])
 
-local volume = x * y * z
+local volume = x * y * z + z + y * z
 
 local fuel = turtle.getFuelLevel()
 
-if volume + z + y * z > fuel then
-    print("Not enough fuel to complete operation")
+if volume > fuel then
+    print("Not enough fuel to complete operation, need " .. volume .. " total fuel")
     return
 end
 
