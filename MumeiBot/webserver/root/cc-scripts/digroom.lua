@@ -250,6 +250,15 @@ local x = tonumber(arg[1])
 local y = tonumber(arg[2])
 local z = tonumber(arg[3])
 
+local volume = x * y * z
+
+local fuel = turtle.getFuelLevel()
+
+if volume + z + y * z > fuel then
+    print("Not enough fuel to complete operation")
+    return
+end
+
 if x == nil or y == nil or z == nil then
     print("Dimensions must be numbers")
     return
