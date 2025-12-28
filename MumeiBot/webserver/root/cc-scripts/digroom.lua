@@ -56,6 +56,7 @@ function moven(length)
         if not flag then
             return false
         end
+        length = length - 1
     end
     return true, nil
 end
@@ -85,6 +86,7 @@ function moveupn(length)
         if not flag then
             return false
         end
+        length = length - 1
     end
     return true, nil
 end
@@ -114,6 +116,7 @@ function movedownn(length)
         if not flag then
             return false
         end
+        length = length - 1
     end
     return true, nil
 end
