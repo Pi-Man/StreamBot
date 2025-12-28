@@ -263,3 +263,7 @@ if not flag then
     print(err)
 end
 
+travelZ(-turtle.z)
+travelY(-turtle.y)
+travelX(-turtle.x)
+
