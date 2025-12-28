@@ -70,7 +70,7 @@ function moveup()
     if not block or info.name == "minecraft:air" then
         flag, err = turtle.up()
     else
-        flag, err = turtle.digup()
+        flag, err = turtle.digUp()
         if flag then flag, err = turtle.up() end
     end
     if not flag then
@@ -102,7 +102,7 @@ function movedown()
     if not block or info.name == "minecraft:air" then
         flag, err = turtle.down()
     else
-        flag, err = turtle.digdown()
+        flag, err = turtle.digDown()
         if flag then flag, err = turtle.down() end
     end
     if not flag then
