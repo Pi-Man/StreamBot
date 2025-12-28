@@ -5,7 +5,8 @@ NEG_X = 3
 
 function face(dir)
     print("turning")
-    local ang = turtle.facing - dir
+    print(dir)
+    local ang = dir - turtle.facing
     while ang >= 2 do ang = ang - 4 end
     while ang < -2 do ang = ang + 4 end
     while ang < 0 do
@@ -16,6 +17,7 @@ function face(dir)
         turtle.turnLeft()
         ang = ang - 1
     end
+    turtle.facing = dir;
     print("turned")
 end
 
@@ -117,6 +119,7 @@ function movedownn(length)
 end
 
 function travelX(length)
+    print("travelX")
     if length < 0 then
         face(NEG_X)
     else
@@ -133,6 +136,7 @@ function travelX(length)
 end
 
 function travelY(length)
+    print("travelY")
     if length < 0 then
         face(NEG_Y)
     else
@@ -149,12 +153,12 @@ function travelY(length)
 end
 
 function travelZ(length)
+    print("travelZ")
     if length < 0 then
         face(NEG_Z)
     else
         face(POS_Z)
     end
-    print("turned")
     length = math.abs(length)
     local flag
     local err
