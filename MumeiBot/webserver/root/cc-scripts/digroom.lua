@@ -267,3 +267,4 @@ travelZ(-turtle.z)
 travelY(-turtle.y)
 travelX(-turtle.x)
 
+face(POS_Z)
