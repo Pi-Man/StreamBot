@@ -4,6 +4,7 @@ NEG_Z = 2
 NEG_X = 3
 
 function face(dir)
+    print("turning")
     local ang = turtle.facing - dir
     while ang >= 2 do ang = ang - 4 end
     while ang < -2 do ang = ang + 4 end
@@ -15,27 +16,24 @@ function face(dir)
         turtle.turnLeft()
         ang = ang - 1
     end
+    print("turned")
 end
 
 function move()
-    print("checking block")
     local block
     local info
     block, info = turtle.inspect()
     local flag
     local err
     if not block or info.name == "minecraft:air" then
-        print("moving forward")
         flag, err = turtle.forward()
     else
-        print("digging forward")
         flag, err = turtle.dig()
         if flag then flag, err = turtle.forward() end
     end
     if not flag then
         return false, err
     end
-    print("end moved 1 step")
     if turtle.facing == POS_Z then
         turtle.z = turtle.z + 1
     elseif turtle.facing == POS_X then
@@ -45,12 +43,10 @@ function move()
     elseif turtle.facing == NEG_X then
         turtle.x = turtle.x - 1
     end
-    print("local pos updated")
     return true, nil
 end
 
 function moven(length)
-    print("moving")
     while length > 0 do
         local flag
         local err
@@ -153,7 +149,6 @@ function travelY(length)
 end
 
 function travelZ(length)
-    print("preparing to travel z")
     if length < 0 then
         face(NEG_Z)
     else
@@ -171,7 +166,6 @@ function travelZ(length)
 end
 
 function dig_slice(width, height)
-    print("digging slice")
     local flag
     local err
     flag, err = travelX(-math.floor((width - 1) / 2))
@@ -214,16 +208,13 @@ function dig_slice(width, height)
 end
 
 function dig_room(width, height, depth)
-    print("digging room")
     local flag
     local err
     for d = 0,depth-1 do
-        print("preparing next slice")
         flag, err = travelZ(1)
         if not flag then
             return false, err
         end
-        print("next slice")
         flag, err = dig_slice(width, height)
         if not flag then
             return false, err
@@ -254,8 +245,6 @@ if x == nil or y == nil or z == nil then
     print("Dimensions must be numbers")
     return
 end
-
-print("initialized")
 
 local flag
 local err
