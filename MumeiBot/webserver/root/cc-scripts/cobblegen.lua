@@ -30,8 +30,8 @@ function process_input()
     if string.find(input, "^run$") then
         count = -1
         cobble_start(true)
-    elseif string.find(input, "^run %d$") then
-        local rest = string.sub(5)
+    elseif string.find(input, "^run %d+$") then
+        local rest = string.sub(input, 5)
         local num = tonumber(rest)
         count = num
         cobble_start(count > 1)
