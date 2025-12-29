@@ -1,6 +1,6 @@
 local timer
 
-function cobbble_loop(continue)
+function cobble_loop(continue)
     redstone.setOutput("bottom", true)
     if continue then timer = os.startTimer(1.5) end
     sleep(0.1)
@@ -77,7 +77,7 @@ function main()
         elseif event == "timer" and timer == arg then
             if count > 0 then
                 count = count - 1
-                cobbble_loop(count > 1)
+                cobble_loop(count > 1)
             elseif count < 0 then
                 cobble_loop(true)
             end
