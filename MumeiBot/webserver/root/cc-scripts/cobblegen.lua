@@ -28,17 +28,15 @@ local running = true
 
 function process_input()
     if string.find(input, "^run") then
-        local a, b = string.find(input, "^run ")
+        local a, b = string.find(input, "^run %d$")
         count = -1
         if a ~= nil then
             local rest = string.sub(5)
             local num = tonumber(rest)
-            if num ~= nil then
-                count = num
-            else
-                print(USAGE)
-                return
-            end
+            count = num
+        else
+            print(USAGE)
+            return
         end
         cobble_start(count > 1)
     elseif string.find(input, "^stop$") then
@@ -48,12 +46,13 @@ function process_input()
     else
         print(USAGE)
     end
+    input = ""
 end
 
 function key_typed(key)
     if key == keys.enter then
         process_input()
-        term.write("\n")
+        term.write("\n" .. PROMPT)
     elseif key == keys.backspace then
         input = string.sub(input, 1, string.leng(input) - 1)
     end
@@ -65,6 +64,7 @@ function char_typed(char)
 end
 
 function main()
+    term.write(PROMPT)
     while running do
         local event, arg = os.pullEvent()
         if event == "key" then
