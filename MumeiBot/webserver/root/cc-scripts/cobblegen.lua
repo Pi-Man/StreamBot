@@ -27,17 +27,13 @@ local count = 0
 local running = true
 
 function process_input()
-    if string.find(input, "^run") then
-        local a, b = string.find(input, "^run %d$")
+    if string.find(input, "^run$") then
         count = -1
-        if a ~= nil then
-            local rest = string.sub(5)
-            local num = tonumber(rest)
-            count = num
-        else
-            print(USAGE)
-            return
-        end
+        cobble_start(true)
+    elseif string.find(input, "^run %d$") then
+        local rest = string.sub(5)
+        local num = tonumber(rest)
+        count = num
         cobble_start(count > 1)
     elseif string.find(input, "^stop$") then
         count = 0
@@ -64,6 +60,7 @@ function char_typed(char)
 end
 
 function main()
+    term.setCursorBlink(true)
     term.write(PROMPT)
     while running do
         local event, arg = os.pullEvent()
