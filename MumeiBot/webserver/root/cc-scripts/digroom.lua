@@ -174,47 +174,109 @@ function travelZ(length)
     return true, nil
 end
 
-function dig_slice(width, height)
+function go_to(x, y, z)
     local flag
     local err
-    flag, err = travelX(-math.floor((width - 1) / 2))
+    flag, err = travelZ(z - turtle.z)
     if not flag then
         return false, err
     end
-    local x = math.floor(width / 2)
-    if height > 1 then
-        flag, err = travelY(1)
-        if not flag then
-            return false, err
-        end
-        local h = height - 2
-        local dir = 1
-        while turtle.x < x do
-            flag, err = travelY(h * dir)
-            if not flag then
-                return false, err
-            end
-            flag, err = travelX(1)
-            if not flag then
-                return false, err
-            end
-            dir = dir * -1
-        end
-        flag, err = travelY(h * dir)
-        if not flag then
-            return false, err
-        end
-    end
-    flag, err = travelY(-turtle.y)
+    flag, err = travelY(y - turtle.y)
     if not flag then
         return false, err
     end
-    flag, err = travelX(-turtle.x)
+    flag, err = travelX(x - turtle.x)
     if not flag then
         return false, err
     end
     return true, nil
 end
+
+local dir = 1
+
+function dig_slice(width, height)
+
+    local nx = -math.floor((width - 1) / 2)
+    local px = math.floor(width / 2)
+    local dx = width - 1
+    local y = height - 1
+
+    local flag
+    local err
+
+    flag, err = go_to(dir > 0 and nx or px, y, turtle.z)
+    if not flag then
+        return false, err
+    end
+
+    while turtle.y > 0 do
+        flag, err = travelX(dx * dir)
+        if not flag then
+            return false, err
+        end
+        flag, err = travelY(-1)
+        if not flag then
+            return false, err
+        end
+        dir = dir * -1
+    end
+
+    flag, err = travelX(dx * dir)
+    if not flag then
+        return false, err
+    end
+    flag, err = travelY(y)
+    if not flag then
+        return false, err
+    end
+
+    dir = dir * -1
+
+    return true, nil
+
+end
+
+-- function dig_slice(width, height)
+--     local flag
+--     local err
+--     flag, err = travelX(-math.floor((width - 1) / 2))
+--     if not flag then
+--         return false, err
+--     end
+--     local x = math.floor(width / 2)
+--     if height > 1 then
+--         flag, err = travelY(1)
+--         if not flag then
+--             return false, err
+--         end
+--         local h = height - 2
+--         local dir = 1
+--         while turtle.x < x do
+--             flag, err = travelY(h * dir)
+--             if not flag then
+--                 return false, err
+--             end
+--             flag, err = travelX(1)
+--             if not flag then
+--                 return false, err
+--             end
+--             dir = dir * -1
+--         end
+--         flag, err = travelY(h * dir)
+--         if not flag then
+--             return false, err
+--         end
+--     end
+--     flag, err = travelY(-turtle.y)
+--     if not flag then
+--         return false, err
+--     end
+--     flag, err = travelX(-turtle.x)
+--     if not flag then
+--         return false, err
+--     end
+--     return true, nil
+-- end
 
 function dig_room(width, height, depth)
     local flag
@@ -231,8 +293,6 @@ function dig_room(width, height, depth)
     end
     return true, nil
 end
-
-
 
 turtle.x = 0
 turtle.y = 0
