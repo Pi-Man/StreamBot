@@ -16,9 +16,12 @@ end
 
 local PROMPT = "Cobble Gen> "
 local USAGE = 
-"<run|stop|exit> [args]\n" ..
-"run [n]    start the cobble generator to make 'n' cobble, or forever if not provided or less than 1\n" ..
-"           does nothing if the generator is already running\n\n" ..
+"<run|stop|exit> [args]\n\n" ..
+"run [n]    start the cobble generator to make 'n'\n" ..
+"           cobble, or forever if not provided or\n" ..
+"           less than 0\n" ..
+"           does nothing if the generator is already" ..
+"           running\n\n" ..
 "stop       stop producing cobble early\n\n" ..
 "exit       exit the program"
 
@@ -36,7 +39,7 @@ function process_input()
         count = num
         cobble_start(count > 1)
     elseif string.find(input, "^stop$") then
-        count = 0
+        count = 1
     elseif string.find(input, "^exit$") then
         running = false
     else
@@ -48,7 +51,10 @@ end
 function key_typed(key)
     if key == keys.enter then
         process_input()
-        term.write("\n" .. PROMPT)
+        print("")
+        if running then
+            term.write(PROMPT)
+        end
     elseif key == keys.backspace then
         input = string.sub(input, 1, string.leng(input) - 1)
     end
@@ -68,10 +74,12 @@ function main()
             key_typed(arg)
         elseif event == "char" then
             char_typed(arg)
-        elseif event == "timer" then
-            count = count - 1
+        elseif event == "timer" and timer == arg then
             if count > 0 then
+                count = count - 1
                 cobbble_loop(count > 1)
+            elseif count < 0 then
+                cobble_loop(true)
             end
         end
     end
