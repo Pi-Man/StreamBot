@@ -16,10 +16,10 @@ end
 
 local PROMPT = "Cobble Gen> "
 local USAGE = 
-"<run|stop|exit> [args]\n"/
-"run [n]    start the cobble generator to make 'n' cobble, or forever if not provided or less than 1\n"/
-"           does nothing if the generator is already running\n\n"/
-"stop       stop producing cobble early\n\n"/
+"<run|stop|exit> [args]\n" ..
+"run [n]    start the cobble generator to make 'n' cobble, or forever if not provided or less than 1\n" ..
+"           does nothing if the generator is already running\n\n" ..
+"stop       stop producing cobble early\n\n" ..
 "exit       exit the program"
 
 local input = ""
