@@ -9,6 +9,7 @@
 #include "util.h"
 #include "register.h"
 #include "htmlform.h"
+#include "ccscripts.h"
 
 int dynamic_page_request(struct mg_connection * conn, void * cbdata);
 
@@ -44,6 +45,10 @@ int main(void) {
 	mg_set_request_handler(ctx, "/register/*", register_guild_callback, NULL);
 	mg_set_request_handler(ctx, "/dynamic/$", dynamic_page_request, NULL);
 	mg_set_request_handler(ctx, "/subscriptioncallback", subscription_page_request, NULL);
+
+	// cc-scripts
+	mg_set_auth_handler(ctx, "/cc-scripts/*", ccscripts_login, NULL);
+	mg_set_request_handler(ctx, "/cc-scripts/*", ccscripts_callback, NULL);
 
 	FATAL_CURL(init_curl());
 

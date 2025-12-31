@@ -9,6 +9,8 @@
 #include <sstream>
 #include <regex>
 
+#include <jwt-cpp/base.h>
+#include <jwt-cpp/jwt.h>
 #define PICOJSON_USE_INT64
 #include <picojson/picojson.h>
 
@@ -383,6 +385,26 @@ std::string format(const std::string & format, const std::initializer_list<const
 	}
 
 	return out;
+}
+
+std::pair<std::string, std::string> get_user_hash_basicauth(const HTTPHeaders &headers) {
+
+	std::regex auth_regex(R"(Basic ([a-zA-Z0-9+/]))");
+	std::smatch match;
+	if (std::regex_match(headers["Authorization"], match, auth_regex)) {
+		std::string auth = jwt::base::decode<jwt::alphabet::base64>(match[1].str());
+		size_t index = auth.find(':');
+		std::string user = auth.substr(0, index);
+		std::string pass = auth.substr(index + 1);
+		static jwt::algorithm::hs512 hasher("pirpasshash");
+		std::error_code err;
+		std::string hash = hasher.sign(pass, err);
+		if (!err) {
+			return { user, hash };
+		}
+	}
+
+    return { "", "" };
 }
 
 // bool is_new_entry(const char * entry_xml) {

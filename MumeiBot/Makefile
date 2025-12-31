@@ -3,7 +3,20 @@ INCLD:=-I./jwt/include -I./uuidv4/include
 
 CPPVER:=-std=c++17
 
-StreamBot: civetweb.o html.o util.o register.o htmlform.o httpheaders.o guild.o channel.o discord.o main.o
+OBJS:=\
+civetweb.o \
+html.o \
+util.o \
+register.o \
+htmlform.o \
+httpheaders.o \
+guild.o \
+channel.o \
+discord.o \
+ccscripts.o \
+main.o
+
+StreamBot: $(OBJS)
 	g++ -g $^ $(args) $(INCLD) $(CPPVER) -lcurl -lpqxx -lpq -lssl -lcrypto -o $@
 
 %.o: %.c
@@ -16,4 +29,4 @@ bin:
 	mkdir bin
 
 clean:
-	rm civetweb.o html.o util.o register.o htmlform.o httpheaders.o guild.o channel.o discord.o main.o
+	rm $(OBJS)

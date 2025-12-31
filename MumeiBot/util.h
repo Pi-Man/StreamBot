@@ -9,6 +9,7 @@
 #include "civetweb.h"
 #include "guild.h"
 #include "channel.h"
+#include "httpheaders.h"
 
 #ifdef _WIN32
 //#include <Windows.h>
@@ -53,7 +54,6 @@ extern std::string input;
 extern std::string output;
 extern std::string output_type;
 
-
 #define FATAL_CURL(cmd) { CURLcode err = cmd; if (err) { fprintf(stderr, "Fatal Error: %s returned %d \"%s\"", #cmd, err, curl_easy_strerror(err)); exit(err); } }
 #define ERROR_CURL(cmd, on_err) { CURLcode err = cmd; if (err) { fprintf(stderr, "Error: %s returned %d \"%s\"", #cmd, err, curl_easy_strerror(err)); on_err } }
 #define THROW_CURL(cmd, finally) { CURLcode err = cmd; if (err) { finally; return err; } }
@@ -88,5 +88,7 @@ std::string get_link(const std::string & body);
 std::string format(const std::string & format, const std::initializer_list<const std::string> && args);
 
 //bool is_new_entry(const char * entry_xml);
+
+std::pair<std::string, std::string> get_user_hash_basicauth(const HTTPHeaders & headers);
 
 #endif
