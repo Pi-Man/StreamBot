@@ -426,10 +426,6 @@ int oauth_callback(struct mg_connection * conn, void * cbdata) {
 	std::string access_token = authenticate(request_headers.cookies);
 
 	if (query.has("code")) {
-		// if (query.has("guild_id")) {
-		// 	mg_send_http_redirect(conn, "/register/", 303);
-		// 	return 1;
-		// }
 
 		std::string code = query["code"];
 
