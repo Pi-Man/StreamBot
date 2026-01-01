@@ -47,8 +47,9 @@ int main(void) {
 	mg_set_request_handler(ctx, "/subscriptioncallback", subscription_page_request, NULL);
 
 	// cc-scripts
-	mg_set_auth_handler(ctx, "/cc-scripts/*", ccscripts_login, NULL);
-	mg_set_request_handler(ctx, "/cc-scripts/*", ccscripts_callback, NULL);
+	mg_set_auth_handler(ctx, "/cc-scripts/*.lua", ccscripts_login, NULL);
+	mg_set_request_handler(ctx, "/cc-scripts/*.lua", ccscripts_callback, NULL);
+	mg_set_request_handler(ctx, "/cc-scripts/create_account", ccscripts_create_login, NULL);
 
 	FATAL_CURL(init_curl());
 

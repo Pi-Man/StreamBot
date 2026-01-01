@@ -27,6 +27,8 @@ std::string output_type;
 
 CURL * curl = NULL;
 
+const jwt::algorithm::hs512 hasher("pirpasshash");
+
 #define SUB_TIMEOUT 10000
 #define SLEEP_TIME 100
 
@@ -389,22 +391,50 @@ std::string format(const std::string & format, const std::initializer_list<const
 
 std::pair<std::string, std::string> get_user_hash_basicauth(const HTTPHeaders &headers) {
 
-	std::regex auth_regex(R"(Basic ([a-zA-Z0-9+/]))");
+	static const std::regex auth_regex(R"(Basic ([a-zA-Z0-9+/=]+))");
 	std::smatch match;
-	if (std::regex_match(headers["Authorization"], match, auth_regex)) {
-		std::string auth = jwt::base::decode<jwt::alphabet::base64>(match[1].str());
+	if (headers.has("Authorization") && std::regex_match(headers["Authorization"], match, auth_regex)) {
+		std::string auth;
+		try {
+			auth = jwt::base::decode<jwt::alphabet::base64>(match[1].str());
+		}
+		catch (std::runtime_error & e) {
+			return { "", "" };
+		}
 		size_t index = auth.find(':');
 		std::string user = auth.substr(0, index);
 		std::string pass = auth.substr(index + 1);
-		static jwt::algorithm::hs512 hasher("pirpasshash");
 		std::error_code err;
-		std::string hash = hasher.sign(pass, err);
+		std::string hash = bstos(hasher.sign(pass, err));
 		if (!err) {
 			return { user, hash };
 		}
 	}
 
     return { "", "" };
+}
+
+std::string bstos(const std::string &byte_string) {
+	constexpr char key[] = "0123456789ABEDEF";
+	std::string out(byte_string.size() * 2, ' ');
+	for (int i = 0; i < byte_string.size(); i++) {
+		unsigned char b = byte_string[i];
+		out[i * 2] = key[b >> 4];
+		out[i * 2 + 1] = key[b & 15];
+	}
+    return out;
+}
+
+std::string stobs(const std::string &string) {
+	std::string out(string.size() / 2, ' ');
+	for (int i = 0; i < string.size(); i += 2) {
+		unsigned char c1 = string[i];
+		unsigned char c2 = string[i + 1];
+		unsigned char b;
+		b = (std::isdigit(c1) ? c1 - '0' : c1 - 'a' + 10) << 4 | (std::isdigit(c2) ? c2 - '0' : c2 - 'a' + 10);
+		out[i / 2] = b;
+	}
+    return out;
 }
 
 // bool is_new_entry(const char * entry_xml) {
