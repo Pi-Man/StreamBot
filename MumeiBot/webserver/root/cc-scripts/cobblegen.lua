@@ -16,7 +16,7 @@ end
 
 local PROMPT = "Cobble Gen> "
 local USAGE = 
-"<run|stop|exit> [args]\n\n" ..
+"run/stop/exit [args]\n\n" ..
 "run [n]    start the cobble generator to make 'n'\n" ..
 "           cobble, or forever if not provided or\n" ..
 "           less than 0\n" ..

@@ -46,5 +46,5 @@ if (arg ~= nil) then
 		end
 	end
 else
-	module('base64',package.seeall)
+    return {enc = enc, dec = dec}
 end
