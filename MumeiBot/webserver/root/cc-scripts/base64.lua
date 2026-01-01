@@ -35,7 +35,7 @@ function dec(data)
 end
 
 -- command line if not called as library
-if (arg ~= nil) then
+if (arg and #arg > 0) then
 	local func = 'enc'
 	for n,v in ipairs(arg) do
 		if (n > 0) then

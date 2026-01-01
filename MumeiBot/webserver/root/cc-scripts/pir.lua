@@ -1,4 +1,4 @@
-local arg = {...}
+local args = {...}
 
 local USAGE =                                        --
 "download/upload [args]\n\n" ..
@@ -17,24 +17,24 @@ end
 
 local base64 = require("base64")
 
-if arg[1] then
-    if arg[1] == "download" then
-        if #arg == 2 then
-            fs.delete("/bin/" .. arg[2])
-            shell.run("wget https://3.141592.dev/cc-scripts/" .. arg[2] .. " /bin/" .. arg[2])
+if args[1] then
+    if args[1] == "download" then
+        if #args == 2 then
+            fs.delete("/bin/" .. args[2])
+            shell.run("wget https://3.141592.dev/cc-scripts/" .. args[2] .. " /bin/" .. args[2])
             return
         else
             print(USAGE)
             return
         end
-    elseif arg[1] == "upload" then
-        if #arg == 5 then
-            local file = fs.open("/bin/" .. arg[2], "r")
+    elseif args[1] == "upload" then
+        if #args == 5 then
+            local file = fs.open("/bin/" .. args[2], "r")
             local script = file.readAll()
             file.close()
-            local authPlain = arg[4] .. ":" .. arg[5]
+            local authPlain = args[4] .. ":" .. args[5]
             local aughB64 = base64.enc(authPlain)
-            local response = http.post("https://3.141592.dev/cc-scripts/" .. arg[2] .. "?version=" .. arg[3], script, { ["Authorization"] = "Basic " .. aughB64})
+            local response = http.post("https://3.141592.dev/cc-scripts/" .. args[2] .. "?version=" .. args[3], script, { ["Authorization"] = "Basic " .. authB64})
             local code, res = response.getResponseCode()
             print("Code: " .. code .. "\nResponse: " .. res)
             return
