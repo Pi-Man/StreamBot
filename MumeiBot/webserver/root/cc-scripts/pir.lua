@@ -53,20 +53,32 @@ if args[1] then
             file.close()
             local authPlain = args[4] .. ":" .. args[5]
             local authB64 = base64.enc(authPlain)
-            local response = http.post("https://3.141592.dev/cc-scripts/" .. args[2] .. "?version=" .. args[3], script, { ["Authorization"] = "Basic " .. authB64})
-            local code, res = response.getResponseCode()
-            print("Code: " .. code .. "\nResponse: " .. res)
+            local okResp, errstr, errResp = http.post("https://3.141592.dev/cc-scripts/" .. args[2] .. "?version=" .. args[3], script, { ["Authorization"] = "Basic " .. authB64})
+            if okResp then
+                print("Upload Successful")
+            else
+                if errResp then
+                    local code, res = errResp.getResponseCode()
+                    print("Code: " .. code .. "\nResponse: " .. res)
+                else
+                    print(errstr)
+                end
+            end
             return
         end
     elseif args[1] == "account" then
         if args[2] == "create" and #args == 4 then
             local body = "user=" .. percent_encode(args[3]) .. "&pass=" .. percent_encode(args[4])
-            local response = http.post("https://3.141592.dev/cc-scripts/create_account", body)
-            local code, res = response.getResponseCode()
-            if code >= 200 and code < 300 then
+            local okResp, errstr, errResp = http.post("https://3.141592.dev/cc-scripts/create_account", body)
+            if okResp then
                 print("Account creation successful")
             else
-                print("Username already taken")
+                if errResp then
+                    local code, res = errResp.getResponseCode()
+                    print("Code: " .. code .. "\nResponse: " .. res)
+                else
+                    print(errstr)
+                end
             end
             return
         end
