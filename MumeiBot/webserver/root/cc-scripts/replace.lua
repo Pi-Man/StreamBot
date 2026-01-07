@@ -269,8 +269,12 @@ function check_inv(movF, dir)
                 flag2 = turtle.suck()
             end
             flag3 = flag3 or flag2
+            if not flag2 then
+                s = s + 1
+            end
             s = s - 1
         end
+        s = s + 1
 
         if not flag3 then
             return false, "out of items"
@@ -281,7 +285,7 @@ function check_inv(movF, dir)
             return false, err
         end
 
-        active_slot = 9
+        active_slot = s
     end
     return true, nil
 end
