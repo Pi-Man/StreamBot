@@ -7,7 +7,6 @@ POS_Y = 4
 NEG_Y = 5
 
 function face(dir)
-    print(dir)
     local ang = dir - turtle.facing
     while ang >= 2 do ang = ang - 4 end
     while ang < -2 do ang = ang + 4 end
@@ -240,8 +239,8 @@ function check_inv(movF, dir)
             return false, err
         end
 
-        local s = 0
-        while turtle.getItemCount(s) > 0 do
+        local s = 1
+        while s <= 16 and turtle.getItemCount(s) > 0 do
             turtle.select(s)
             if dir == POS_Y then
                 turtle.dropUp()
@@ -251,13 +250,16 @@ function check_inv(movF, dir)
                 face(dir)
                 turtle.drop()
             end
+            s = s + 1
         end
 
         movF(1)
 
         local flag2 = true
         local flag3 = false
-        while flag2 do
+        s = 16
+        while s >= 9 and flag2 do
+            turtle.select(s)
             if dir == POS_Y then
                 flag2 = turtle.suckUp()
             elseif dir == NEG_Y then
@@ -267,6 +269,7 @@ function check_inv(movF, dir)
                 flag2 = turtle.suck()
             end
             flag3 = flag3 or flag2
+            s = s - 1
         end
 
         if not flag3 then
@@ -289,6 +292,7 @@ function replace_topF()
     if not flag then
         return false, err
     end
+    turtle.select(1)
     while turtle.inspectUp() do
         flag, err = turtle.digUp()
         if not flag then
@@ -297,6 +301,7 @@ function replace_topF()
     end
     turtle.select(active_slot)
     turtle.placeUp()
+    return true, nil
 end
 
 function replace_bottomF()
@@ -305,6 +310,7 @@ function replace_bottomF()
     if not flag then
         return false, err
     end
+    turtle.select(1)
     if turtle.inspectDown() then
         flag, err = turtle.digDown()
         if not flag then
@@ -313,6 +319,7 @@ function replace_bottomF()
     end
     turtle.select(active_slot)
     turtle.placeDown()
+    return true, nil
 end
 
 function replace_wallF()
@@ -322,6 +329,7 @@ function replace_wallF()
         return false, err
     end
     face(POS_Z)
+    turtle.select(1)
     while turtle.inspect() do
         flag, err = turtle.dig()
         if not flag then
@@ -330,6 +338,7 @@ function replace_wallF()
     end
     turtle.select(active_slot)
     turtle.place()
+    return true, nil
 end
 
 function replace_top(width, height)
