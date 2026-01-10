@@ -222,12 +222,12 @@ end
 
 local active_slot = 9
 
-function check_inv(movF, dir)
+function check_inv(movF, dir, force)
     if turtle.getItemCount(active_slot) == 0 then
         active_slot = active_slot + 1
     end
     local full = turtle.getItemCount(active_slot - 2) ~= 0
-    if full or turtle.getItemCount(16) == 0 then
+    if force or full or turtle.getItemCount(16) == 0 then
         local flag, err
 
         local x = turtle.x
@@ -286,6 +286,59 @@ function check_inv(movF, dir)
         end
 
         active_slot = s
+    end
+    return true, nil
+end
+
+function empty(movF, dir)
+
+    local flag, err
+
+    local x = turtle.x
+    local y = turtle.y
+    local z = turtle.z
+
+    flag, err = go_to(0, 0, 0)
+    if not flag then
+        return false, err
+    end
+
+    local s = 1
+    while s <= 16 and turtle.getItemCount(s) > 0 do
+        turtle.select(s)
+        if dir == POS_Y then
+            turtle.dropUp()
+        elseif dir == NEG_Y then
+            turtle.dropDown()
+        else
+            face(dir)
+            turtle.drop()
+        end
+        s = s + 1
+    end
+
+    movF(1)
+
+    local s = active_slot
+    while s <= 16 and turtle.getItemCount(s) > 0 do
+        turtle.select(s)
+        if turtle.getItemCount() == 0 then
+            break
+        end
+        if dir == POS_Y then
+            turtle.dropUp()
+        elseif dir == NEG_Y then
+            turtle.dropDown()
+        else
+            face(dir)
+            turtle.drop()
+        end
+        s = s + 1
+    end
+
+    flag, err = go_to(x, y, z)
+    if not flag then
+        return false, err
     end
     return true, nil
 end
@@ -350,6 +403,8 @@ function replace_top(width, height)
     local err
     travelY(128)
     flag, err = replace(width, height, travelX, travelZ, replace_topF)
+    go_to(0, 0, 0)
+    check_inv(travelZ, NEG_Y, true)
     return flag, err
 end
 
@@ -357,6 +412,8 @@ function replace_bottom(width, height)
     local flag
     local err
     flag, err = replace(width, height, travelX, travelZ, replace_bottomF)
+    go_to(0, 0, 0)
+    check_inv(travelZ, POS_Y, true)
     return flag, err
 end
 
@@ -364,6 +421,8 @@ function replace_wall(width, height)
     local flag
     local err
     flag, err = replace(height, width, travelY, travelX, replace_wallF)
+    go_to(0, 0, 0)
+    check_inv(travelY, NEG_Z, true)
     return flag, err
 end
 
