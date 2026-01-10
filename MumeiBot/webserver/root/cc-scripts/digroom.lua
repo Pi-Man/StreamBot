@@ -3,9 +3,45 @@ POS_X = 1
 NEG_Z = 2
 NEG_X = 3
 
+local fluids = { "minecraft:water", "minecraft:lava" }
+
+function contains(list, item)
+    for _, i in ipairs(list) do
+        if item == i then
+            return true
+        end
+    end
+    return false
+end
+
+function check_inv()
+    local flag, err
+    if turtle.getItemCount(16) > 0 then
+        local x = turtle.x
+        local y = turtle.y
+        local z = turtle.z
+        flag, err = go_to(0, 0, 1)
+        if not flag then
+            return false, err
+        end
+        flag, err = go_to(0, 0, 0)
+        if not flag then
+            return false, err
+        end
+        for s = 1,16 do
+            turtle.select(s)
+            turtle.dumpUp()
+        end
+        turtle.select(1)
+        flag, err = go_to(x, y, z)
+        if not flag then
+            return false, err
+        end
+    end
+    return true, nil
+end
+
 function face(dir)
-    print("turning")
-    print(dir)
     local ang = dir - turtle.facing
     while ang >= 2 do ang = ang - 4 end
     while ang < -2 do ang = ang + 4 end
@@ -17,21 +53,26 @@ function face(dir)
         turtle.turnLeft()
         ang = ang - 1
     end
-    turtle.facing = dir;
-    print("turned")
+    turtle.facing = dir
 end
 
 function move()
+    local flag
+    local err
+    flag, err = check_inv()
+    if not flag then
+        return false, err
+    end
     local block
     local info
     block, info = turtle.inspect()
-    local flag
-    local err
-    if not block or info.name == "minecraft:air" then
+    if not block or info.name == "minecraft:air" or contains(fluids, info.name) then
         flag, err = turtle.forward()
     else
-        flag, err = turtle.dig()
-        if flag then flag, err = turtle.forward() end
+        while turtle.inspect() do
+            turtle.dig()
+        end
+        flag, err = turtle.forward()
     end
     if not flag then
         return false, err
@@ -62,11 +103,15 @@ function moven(length)
 end
 
 function moveup()
+    local flag
+    local err
+    flag, err = check_inv()
+    if not flag then
+        return false, err
+    end
     local block
     local info
     block, info = turtle.inspectUp()
-    local flag
-    local err
     if not block or info.name == "minecraft:air" then
         flag, err = turtle.up()
     else
@@ -94,11 +139,15 @@ function moveupn(length)
 end
 
 function movedown()
+    local flag
+    local err
+    flag, err = check_inv()
+    if not flag then
+        return false, err
+    end
     local block
     local info
     block, info = turtle.inspectDown()
-    local flag
-    local err
     if not block or info.name == "minecraft:air" then
         flag, err = turtle.down()
     else
@@ -126,7 +175,6 @@ function movedownn(length)
 end
 
 function travelX(length)
-    print("travelX")
     if length < 0 then
         face(NEG_X)
     else
@@ -143,7 +191,6 @@ function travelX(length)
 end
 
 function travelY(length)
-    print("travelY")
     local flag
     local err
     if length < 0 then
@@ -158,7 +205,6 @@ function travelY(length)
 end
 
 function travelZ(length)
-    print("travelZ")
     if length < 0 then
         face(NEG_Z)
     else
@@ -235,48 +281,6 @@ function dig_slice(width, height)
     return true, nil
 
 end
-
--- function dig_slice(width, height)
---     local flag
---     local err
---     flag, err = travelX(-math.floor((width - 1) / 2))
---     if not flag then
---         return false, err
---     end
---     local x = math.floor(width / 2)
---     if height > 1 then
---         flag, err = travelY(1)
---         if not flag then
---             return false, err
---         end
---         local h = height - 2
---         local dir = 1
---         while turtle.x < x do
---             flag, err = travelY(h * dir)
---             if not flag then
---                 return false, err
---             end
---             flag, err = travelX(1)
---             if not flag then
---                 return false, err
---             end
---             dir = dir * -1
---         end
---         flag, err = travelY(h * dir)
---         if not flag then
---             return false, err
---         end
---     end
---     flag, err = travelY(-turtle.y)
---     if not flag then
---         return false, err
---     end
---     flag, err = travelX(-turtle.x)
---     if not flag then
---         return false, err
---     end
---     return true, nil
--- end
 
 function dig_room(width, height, depth)
     local flag
