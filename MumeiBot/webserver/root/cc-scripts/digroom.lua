@@ -14,9 +14,11 @@ function contains(list, item)
     return false
 end
 
+local check_flag = true
 function check_inv()
     local flag, err
-    if turtle.getItemCount(16) > 0 then
+    if check_flag and turtle.getItemCount(16) > 0 then
+        check_flag = false
         local x = turtle.x
         local y = turtle.y
         local z = turtle.z
@@ -37,6 +39,7 @@ function check_inv()
         if not flag then
             return false, err
         end
+        check_flag = true
     end
     return true, nil
 end
