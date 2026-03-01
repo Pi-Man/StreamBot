@@ -19,12 +19,13 @@
                 %s
             </div>
             <div id="chat">
+                <h1>Chat</h1>
                 <form action="/PiC/api/post" method="post">
                     <input type="hidden" name="server" value="%s">
                     <input type="hidden" name="channel" value="%s">
                     <input name="message" id="messageinput">
                     <button>-></button>
-                    <button name="refresh">R</button>
+                    <button name="refresh">↺</button>
                 </form>
                 <div id="history">
                     %s
