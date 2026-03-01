@@ -23,7 +23,7 @@ void pic_join_server(std::string name, std::string user);
 
 bool pic_server_has_channel(std::string server, std::string channel);
 
-void pic_post_message(std::string server, std::string channel, std::string message);
+void pic_post_message(std::string server, std::string channel, std::string user, std::string message);
 
 std::vector<PiC_Server> get_all_servers(std::string user);
 

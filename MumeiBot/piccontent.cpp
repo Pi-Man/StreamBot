@@ -340,7 +340,7 @@ int pic_post_callback(mg_connection *conn, void *cbdata) {
             return 400;
         }
 
-        pic_post_message(request_form["server"], request_form["channel"], request_form["message"]);
+        pic_post_message(request_form["server"], request_form["channel"], user, request_form["message"]);
     }
 
     mg_send_http_redirect(conn, ("/PiC/Server/" + request_form["server"] + "?c=" + request_form["channel"]).c_str(), 303);

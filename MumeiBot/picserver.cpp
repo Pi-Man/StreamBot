@@ -14,7 +14,7 @@ static void build_channel_table(pqxx::work & work) {
 	work.exec("CREATE TABLE IF NOT EXISTS pic_channel(id SERIAL PRIMARY KEY, name VARCHAR(64), server_name VARCHAR(64))");
 }
 static void build_message_table(pqxx::work & work) {
-	work.exec("CREATE TABLE IF NOT EXISTS pic_message(id SERIAL PRIMARY KEY, server_name VARCHAR(64), channel_name VARCHAR(64), message TEXT)");
+	work.exec("CREATE TABLE IF NOT EXISTS pic_message(id SERIAL PRIMARY KEY, server_name VARCHAR(64), channel_name VARCHAR(64), user_name VARCHAR(64), message TEXT)");
 }
 static void join_server(pqxx::work & work, std::string server, std::string user) {
     work.exec_params("INSERT INTO pic_server_user VALUES ($1, $2)", server, user);
@@ -110,17 +110,17 @@ bool pic_server_has_channel(std::string server, std::string channel) {
     return !table.empty();
 }
 
-void pic_post_message(std::string server, std::string channel, std::string message) {
+void pic_post_message(std::string server, std::string channel, std::string user, std::string message) {
 
     pqxx::connection pqconn(CONN_STR);
     pqxx::work work(pqconn);
 
     build_message_table(work);
 
-    work.exec_params("INSERT INTO pic_message(server_name, channel_name, message) VALUES ($1, $2, $3)", server, channel, message);
+    work.exec_params("INSERT INTO pic_message(server_name, channel_name, user_name, message) VALUES ($1, $2, $3, $4)", server, channel, user, message);
 
     work.commit();
-    
+
 }
 
 std::vector<PiC_Server> get_all_servers(std::string user) {
