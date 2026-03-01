@@ -209,20 +209,21 @@ std::vector<std::string> get_server_channels(std::string server) {
     return channels;
 }
 
-std::vector<std::string> get_chat(std::string server, std::string channel) {
+std::vector<std::pair<std::string, std::string>> get_chat(std::string server, std::string channel) {
 
     pqxx::connection pqconn(CONN_STR);
     pqxx::work work(pqconn);
 
     build_message_table(work);
 
-    pqxx::result table = work.exec_params("SELECT message FROM pic_message WHERE server_name=$1 AND channel_name=$2", server, channel);
+    pqxx::result table = work.exec_params("SELECT user, message FROM pic_message WHERE server_name=$1 AND channel_name=$2", server, channel);
 
-    std::vector<std::string> chat;
+    std::vector<std::pair<std::string, std::string>> chat;
         for (const pqxx::row & row : table) {
-        chat.push_back(
-            row[0].as<std::string>()
-        );
+        chat.push_back({
+            row[0].as<std::string>(),
+            row[1].as<std::string>()
+        });
     }
 
     return chat;

@@ -117,8 +117,8 @@ int pic_server_callback(struct mg_connection * conn, void * cbdata) {
     if (!pic_server_has_channel(server_name, channel)) channel.clear();
 
     if (!channel.empty()) {
-        for (const std::string & message : get_chat(server_name, channel)) {
-            chat += format(load_file(WEB_ROOT "/PiC/server/chat_entry.html"), {message});
+        for (const std::pair<std::string, std::string> & message_entry : get_chat(server_name, channel)) {
+            chat += format(load_file(WEB_ROOT "/PiC/server/chat_entry.html"), {message_entry.first, message_entry.second});
         }
     }
 

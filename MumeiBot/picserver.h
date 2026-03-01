@@ -33,6 +33,6 @@ std::vector<PiC_Server> get_user_owned_servers(std::string user);
 
 std::vector<std::string> get_server_channels(std::string server);
 
-std::vector<std::string> get_chat(std::string server, std::string channel);
+std::vector<std::pair<std::string, std::string>> get_chat(std::string server, std::string channel);
 
 #endif
