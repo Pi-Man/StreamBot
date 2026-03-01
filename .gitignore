@@ -60,3 +60,5 @@ MumeiBot/MumeiBot/
 *.txt
 *.exe
 *.vcxproj*
+jwt/
+.vscode/
