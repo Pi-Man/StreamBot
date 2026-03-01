@@ -1,0 +1,59 @@
+body {
+    background-color: #202020;
+    color: white
+}
+
+#grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr 6fr;
+}
+
+#joined {
+    grid-column: 1;
+}
+
+#channels {
+    grid-column: 2;
+}
+
+#chat {
+    grid-column: 3;
+}
+
+.entry {
+    display: flex;
+    align-items: center;
+}
+
+.pfp {
+    width: 36pt;
+    height: 36pt;
+}
+
+.username, .username:visited {
+    color: white;
+    font-size: 16pt;
+    text-decoration: none;
+}
+
+.username:hover, .username:active {
+    color: white;
+    text-decoration: underline;
+}
+
+.status {
+    color: #a0a0a0;
+    font-size: 10pt;
+    text-decoration: none;
+}
+
+.servername, .servername:visited {
+    color: white;
+    font-size: 24pt;
+    text-decoration: none;
+}
+
+.servername:hover, .servername:active {
+    color: white;
+    text-decoration: underline;
+}

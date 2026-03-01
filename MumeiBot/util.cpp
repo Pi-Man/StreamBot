@@ -414,6 +414,21 @@ std::pair<std::string, std::string> get_user_hash_basicauth(const HTTPHeaders &h
     return { "", "" };
 }
 
+std::pair<std::string, std::string> get_user_hash_form(const HTMLForm &form, const std::string & user_key, const std::string & pass_key) {
+
+	if (form.has(user_key) && form.has(pass_key)) {
+		std::string user = form[user_key];
+		std::string pass = form[pass_key];
+		std::error_code err;
+		std::string hash = bstos(hasher.sign(pass, err));
+		if (!err) {
+			return { user, hash };
+		}
+	}
+
+    return { "", "" };
+}
+
 std::string bstos(const std::string &byte_string) {
 	constexpr char key[] = "0123456789ABEDEF";
 	std::string out(byte_string.size() * 2, ' ');

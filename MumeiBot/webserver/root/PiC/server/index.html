@@ -1,0 +1,35 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>PiC: %s</title>
+        <link rel="stylesheet" href="/PiC/server/style.css">
+    </head>
+    <body>
+        <div>
+            <a href="/PiC/home">Home</a>
+            <h1>%s</h1>
+        </div>
+        <div id="grid">
+            <div id="joined_small">
+                <h1>Servers</h1>
+                %s
+            </div>
+            <div id="channels">
+                <h1>Channels%s</h1>
+                %s
+            </div>
+            <div id="chat">
+                <form action="/PiC/api/post" method="post">
+                    <input type="hidden" name="server" value="%s">
+                    <input type="hidden" name="channel" value="%s">
+                    <input name="message" id="messageinput">
+                    <button>-></button>
+                    <button name="refresh">R</button>
+                </form>
+                <div id="history">
+                    %s
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

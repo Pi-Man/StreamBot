@@ -14,6 +14,9 @@ guild.o \
 channel.o \
 discord.o \
 ccscripts.o \
+piclogin.o \
+piccontent.o \
+picserver.o \
 main.o
 
 StreamBot: $(OBJS)

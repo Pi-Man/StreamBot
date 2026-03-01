@@ -11,6 +11,7 @@
 #include "guild.h"
 #include "channel.h"
 #include "httpheaders.h"
+#include "htmlform.h"
 
 #ifdef _WIN32
 //#include <Windows.h>
@@ -93,6 +94,8 @@ std::string format(const std::string & format, const std::initializer_list<const
 //bool is_new_entry(const char * entry_xml);
 
 std::pair<std::string, std::string> get_user_hash_basicauth(const HTTPHeaders & headers);
+
+std::pair<std::string, std::string> get_user_hash_form(const HTMLForm &form, const std::string & user_key, const std::string & pass_key);
 
 std::string bstos (const std::string & byte_string);
 

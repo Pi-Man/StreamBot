@@ -10,6 +10,8 @@
 #include "register.h"
 #include "htmlform.h"
 #include "ccscripts.h"
+#include "piclogin.h"
+#include "piccontent.h"
 
 int dynamic_page_request(struct mg_connection * conn, void * cbdata);
 
@@ -50,6 +52,19 @@ int main(void) {
 	mg_set_auth_handler(ctx, "/cc-scripts/*.lua", ccscripts_login, NULL);
 	mg_set_request_handler(ctx, "/cc-scripts/*.lua", ccscripts_callback, NULL);
 	mg_set_request_handler(ctx, "/cc-scripts/create_account", ccscripts_create_login, NULL);
+
+	//PiC
+	mg_set_request_handler(ctx, "/PiC/api/login", pic_login_callback, NULL);
+	mg_set_request_handler(ctx, "/PiC/api/register", pic_register_callback, NULL);
+	mg_set_request_handler(ctx, "/PiC/home/$", pic_home_callback, NULL);
+	mg_set_request_handler(ctx, "/PiC/api/server/*/add_channel", pic_server_add_channel_callback, NULL);
+	mg_set_request_handler(ctx, "/PiC/api/server/*/remove_channel", pic_server_remove_channel_callback, NULL);
+	mg_set_request_handler(ctx, "/PiC/api/server$", pic_server_create_callback, NULL);
+	mg_set_request_handler(ctx, "/PiC/server/*/manage$", pic_server_manage_callback, NULL);
+	mg_set_request_handler(ctx, "/PiC/server/*$", pic_server_callback, NULL);
+	mg_set_request_handler(ctx, "/PiC/find_server/$", pic_find_server_callback, NULL);
+	mg_set_request_handler(ctx, "/PiC/api/join", pic_server_join_callback, NULL);
+	mg_set_request_handler(ctx, "/PiC/api/post", pic_post_callback, NULL);
 
 	FATAL_CURL(init_curl());
 

@@ -1,0 +1,24 @@
+<!DOCTYPE HTML>
+<html>
+    <head>
+        <title>PiC: %s Manage</title>
+        <link rel="stylesheet" href="/PiC/server/manage/style.css">
+    </head>
+    <body>
+        <div>
+            <a href="/PiC/server/%s">Home</a>
+            <h1>%s</h1>
+        </div>
+        <div id="channels">
+            <h1>Channels</h1>
+            <form action="/PiC/api/server/%s/add_channel" method="post">
+                <label for="channel">Channel Name</label>
+                <br>
+                <input name="channel">
+                <br>
+                <button>Create Channel</button>
+            </form>
+            %s
+        </div>
+    </body>
+</html>

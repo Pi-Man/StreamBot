@@ -1,0 +1,26 @@
+<!DOCTYPE=HTML>
+
+<title>PiC Login</title>
+<html>
+    <head>
+
+    </head>
+    <body>
+        <form method="post">
+            <label for="username">Username</label>
+            <input name="username">
+            <br>
+            <label for="password">Password</label>
+            <input type="password" name="password">
+            <br>
+            <button formaction="/PiC/api/login">Login</button>
+            <button formaction="/PiC/api/register">Register</button>
+        </form>
+        <br>
+        <br>
+        <form action="/PiC/api/login" method="post">
+            <input type="hidden" name="anon">
+            <button>Anonymous</button>
+        </form>
+    </body>
+</html>
