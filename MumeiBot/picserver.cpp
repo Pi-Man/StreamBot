@@ -216,7 +216,7 @@ std::vector<std::pair<std::string, std::string>> get_chat(std::string server, st
 
     build_message_table(work);
 
-    pqxx::result table = work.exec_params("SELECT user, message FROM pic_message WHERE server_name=$1 AND channel_name=$2", server, channel);
+    pqxx::result table = work.exec_params("SELECT user_name, message FROM pic_message WHERE server_name=$1 AND channel_name=$2", server, channel);
 
     std::vector<std::pair<std::string, std::string>> chat;
         for (const pqxx::row & row : table) {
