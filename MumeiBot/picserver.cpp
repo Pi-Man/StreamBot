@@ -2,6 +2,8 @@
 
 #include <pqxx/pqxx>
 
+#include "civetweb.h"
+
 #include "util.h"
 
 static void build_server_table(pqxx::work & work) {
@@ -209,6 +211,24 @@ std::vector<std::string> get_server_channels(std::string server) {
     return channels;
 }
 
+std::string & html_sanitize(std::string & str) {
+
+    for (size_t i = 0; i < str.size(); i++) {
+        if (str[i] == '<') {
+            str.replace(i, 1, "&lt;");
+        }
+        else if (str[i] == '>') {
+            str.replace(i, 1, "&gt;");
+        }
+        else if (str[i] == '&') {
+            str.replace(i, 1, "$amp;");
+        }
+    }
+
+    return str;
+
+}
+
 std::vector<std::pair<std::string, std::string>> get_chat(std::string server, std::string channel) {
 
     pqxx::connection pqconn(CONN_STR);
@@ -219,10 +239,13 @@ std::vector<std::pair<std::string, std::string>> get_chat(std::string server, st
     pqxx::result table = work.exec_params("SELECT user_name, message FROM pic_message WHERE server_name=$1 AND channel_name=$2", server, channel);
 
     std::vector<std::pair<std::string, std::string>> chat;
-        for (const pqxx::row & row : table) {
+    for (const pqxx::row & row : table) {
+        std::string user = row[0].as<std::string>();
+        std::string message = row[1].as<std::string>();
+
         chat.push_back({
-            row[0].as<std::string>(),
-            row[1].as<std::string>()
+            html_sanitize(user),
+            html_sanitize(message)
         });
     }
 
